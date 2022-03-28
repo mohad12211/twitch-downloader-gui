@@ -13,7 +13,7 @@ DEPS=$(patsubst $(SRCDIR)/%.c, $(DEPDIR)/%.d, $(SRCS))
 BIN=$(BINDIR)/TwitchDownloader-gui
 CFLAGS=-std=c99 -Wswitch-enum -Wpedantic -Wextra -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter -Wno-cast-qual -O2 
 DEPFLAGS=-MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
-LDFLAGS=-ldl -lm -pthread -lcurl libs/libui.a `pkg-config --cflags --libs gtk+-3.0`
+LDFLAGS=libs/libui.a `pkg-config --cflags --libs gtk+-3.0` -ldl -lm -pthread -lcurl
 .PHONY: all clean
 
 all: clean $(BIN) 
