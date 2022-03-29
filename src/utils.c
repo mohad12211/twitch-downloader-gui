@@ -88,10 +88,9 @@ char *getLocalTime(char *utcTime) {
 
 // fgets but retuns after \n AND \r
 char *mygets(char *buf, int n, FILE *f) {
-  register int c;
-  register char *mbuf;
+  register int c = 0;
+  register char *mbuf = buf;
 
-  mbuf = buf;
   while (--n > 0 && (c = getc(f)) != EOF) {
     if (c == '\n' || c == '\r') {
       *mbuf++ = '\n';

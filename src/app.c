@@ -1,14 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include "../libs/ui.h"
-
-uiWindow *mainwin;
-uiControl *VodDownloaderDrawUi(void);
-uiControl *ClipDownloaderDrawUi(void);
-uiControl *ChatDownloaderDrawUi(void);
-uiControl *ChatRenderDrawUi(void);
+#include "app.h"
 
 static int onClosing(uiWindow *w, void *data) {
   uiQuit();
@@ -26,6 +19,8 @@ int main(int argc, char const *argv[]) {
   uiInitOptions options;
   const char *err;
   uiTab *tab;
+  uiMenu *menu;
+  uiMenuItem *item;
 
   memset(&options, 0, sizeof(uiInitOptions));
   err = uiInit(&options);
@@ -35,7 +30,12 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
-  mainwin = uiNewWindow("TwitchDownloader-gui", 1250, 700, 0);
+  menu = uiNewMenu("Options");
+  item = uiMenuAppendItem(menu, "Change TwitchDownloaderCLI binary path");
+  // uiMenuItemOnClicked(item, saveClicked, NULL);
+  item = uiMenuAppendQuitItem(menu);
+
+  mainwin = uiNewWindow("TwitchDownloader-gui", 1250, 700, 1);
   uiWindowOnClosing(mainwin, onClosing, NULL);
   uiOnShouldQuit(onShouldQuit, mainwin);
 

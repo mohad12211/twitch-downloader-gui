@@ -366,12 +366,11 @@ static char *getId(const char *link) {
     return NULL;
   }
 
-  CURLU *h;
+  CURLU *h = curl_url();
   CURLUcode uc;
-  char *path;
-  char *id;
+  char *path = NULL;
+  char *id = NULL;
 
-  h = curl_url();
   uc = curl_url_set(h, CURLUPART_URL, link, 0);
   uc = curl_url_get(h, CURLUPART_PATH, &path, 0);
   if (!uc) {
