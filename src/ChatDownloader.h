@@ -1,8 +1,6 @@
 #include "utils.h"
 #include "../libs/stb_image.h"
 
-extern uiWindow *mainwin;
-
 char *timeFormatsArr[] = {"Utc", "Relative", "None"};
 
 struct handler {

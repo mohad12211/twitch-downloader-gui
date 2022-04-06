@@ -22,6 +22,8 @@ typedef struct {
 } string;
 
 enum { GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL };
+extern char *binaryPath;
+extern uiWindow *mainwin;
 
 size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
 string *requestImage(char *link);

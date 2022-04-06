@@ -226,7 +226,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 
-  concat(cmd, 2, "TwitchDownloaderCLI -m ChatRender -i ", renderOptions->fileName);
+  concat(cmd, 3, binaryPath, " -m ChatRender -i ", renderOptions->fileName);
 
   uiFontDescriptor font;
   uiFontButtonFont(renderOptions->fontOptions, &font);
@@ -387,6 +387,9 @@ static void runOnUiThread(void *args) {
     break;
   case LOGGING:
     uiMultilineEntryAppend(renderOptions->logsEntry, data->buf);
+    if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+      uiMultilineEntryAppend(renderOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+    }
     free(data->buf);
     break;
   case FINISH:

@@ -238,7 +238,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
-  concat(cmd, 3, "TwitchDownloaderCLI -m ChatDownload -u '", chatOptions->id, "'");
+  concat(cmd, 4, binaryPath, " -m ChatDownload -u '", chatOptions->id, "'");
 
   if (uiCheckboxChecked(chatOptions->cropStartCheck)) {
     char seconds[12];
@@ -460,6 +460,9 @@ static void runOnUiThread(void *args) {
     break;
   case LOGGING:
     uiMultilineEntryAppend(chatOptions->logsEntry, data->buf);
+    if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+      uiMultilineEntryAppend(chatOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+    }
     free(data->buf);
     break;
   case FINISH:

@@ -2,8 +2,6 @@
 
 uiControl *ChatRender(void);
 
-extern uiWindow *mainwin;
-
 typedef struct {
   char *name;
   char *defaultName;

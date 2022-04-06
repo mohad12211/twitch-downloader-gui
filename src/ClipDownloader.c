@@ -153,10 +153,10 @@ static void downloadBtnClicked(uiButton *b, void *data) {
   }
 
   ClipOptions *clipOptions = (ClipOptions *)data;
-  // because the command is always the same for ClipDownload it's easier to make
-  // a template with format string
-  char cmd[commandTemplateLength + strlen(clipOptions->id) + strlen(fileName) + 1];
-  sprintf(cmd, "TwitchDownloaderCLI -m ClipDownload -u '%s' -q '%s' -o %s 2>&1", clipOptions->id, qualityArray[uiComboboxSelected(clipOptions->qualities)], fileName);
+  // because the command is always the same for ClipDownload it's easier to make a template with format string
+  // TODO: maybe change it like the others with concat?
+  char cmd[commandTemplateLength + strlen(binaryPath) + strlen(clipOptions->id) + strlen(fileName) + 1];
+  sprintf(cmd, "%s -m ClipDownload -u '%s' -q '%s' -o %s 2>&1", binaryPath, clipOptions->id, qualityArray[uiComboboxSelected(clipOptions->qualities)], fileName);
   clipOptions->cmd = strdup(cmd);
 
   uiFreeText(fileName);
@@ -182,7 +182,7 @@ static void *downloadTask(void *args) {
 
   while (mygets(buf, 200, fp) != NULL) {
     uiData *logData = malloc(sizeof(uiData));
-    *data = (uiData){.buf = strdup(buf), .clipOptions = clipOptions, .flag = LOGGING};
+    *logData = (uiData){.buf = strdup(buf), .clipOptions = clipOptions, .flag = LOGGING};
     uiQueueMain(runOnUiThread, logData);
   }
 
@@ -306,6 +306,9 @@ static void runOnUiThread(void *args) {
     break;
   case LOGGING:
     uiMultilineEntryAppend(clipOptions->logsEntry, data->buf);
+    if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+      uiMultilineEntryAppend(clipOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+    }
     free(data->buf);
     break;
   case FINISH:

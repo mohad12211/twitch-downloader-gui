@@ -1,6 +1,10 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <string.h>
 #include "app.h"
 
 static int onClosing(uiWindow *w, void *data) {
@@ -13,6 +17,39 @@ static int onShouldQuit(void *data) {
 
   uiControlDestroy(uiControl(mMainwin));
   return 1;
+}
+
+static void setBinaryPath(uiMenuItem *i, uiWindow *win, void *data) {
+  char *specifiedPath = uiOpenFile(mainwin, NULL, "");
+  if (!specifiedPath)
+    return;
+  if (access(specifiedPath, X_OK) == -1) {
+    uiMsgBoxError(mainwin, "Binary is not Executable!", "This program not executable, to make it so, run this at the location of the program\nchmod +x TwitchDownloaderCLI");
+  }
+  free(binaryPath);
+  binaryPath = specifiedPath;
+  ConfigData *configData = (ConfigData *)data;
+  mkdir(configData->configDirectory, 0700);
+  //  TODO: make this better, e.g. use xdg and error handling
+  FILE *fp = fopen(configData->configFile, "w");
+  fprintf(fp, "%s\n", binaryPath);
+  fclose(fp);
+}
+
+static char *getBinaryPath(char *configFile) {
+  char buf[500]; // TODO: make this safer
+  char *path = NULL;
+  FILE *fp = fopen(configFile, "r");
+  if (fp == NULL || fgets(buf, 500, fp) == NULL) {
+    path = strdup("TwitchDownloaderCLI");
+  } else {
+    buf[strlen(buf) - 1] = '\0';
+    path = strdup(buf);
+  }
+
+  if (fp)
+    fclose(fp);
+  return path;
 }
 
 int main(int argc, char const *argv[]) {
@@ -30,18 +67,34 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
+  char *HOME = getenv("HOME");
+  char configDirectory[strlen(HOME) + strlen("/.config/TwitchDownloader-gui") + 1];
+  sprintf(configDirectory, "%s%s", HOME, "/.config/TwitchDownloader-gui");
+  char configFile[strlen(configDirectory) + strlen("/TwitchDownloader-gui.conf") + 1];
+  sprintf(configFile, "%s%s", configDirectory, "/TwitchDownloader-gui.conf");
+  binaryPath = getBinaryPath(configFile);
+  ConfigData configData = {configDirectory, configFile};
+
   menu = uiNewMenu("Options");
   item = uiMenuAppendItem(menu, "Change TwitchDownloaderCLI binary path");
-  // uiMenuItemOnClicked(item, saveClicked, NULL);
+  uiMenuItemOnClicked(item, setBinaryPath, &configData);
   item = uiMenuAppendQuitItem(menu);
 
   mainwin = uiNewWindow("TwitchDownloader-gui", 1250, 700, 1);
+  uiWindowSetMargined(mainwin, 1);
   uiWindowOnClosing(mainwin, onClosing, NULL);
   uiOnShouldQuit(onShouldQuit, mainwin);
 
+  uiBox *vbox = uiNewVerticalBox();
+  uiBoxSetPadded(vbox, 1);
+  uiWindowSetChild(mainwin, uiControl(vbox));
+
+  uiLabel *update = uiNewLabel("New update is available!");
+  uiBoxAppend(vbox, uiControl(update), 0);
+  uiControlHide(uiControl(update));
+
   tab = uiNewTab();
-  uiWindowSetChild(mainwin, uiControl(tab));
-  uiWindowSetMargined(mainwin, 1);
+  uiBoxAppend(vbox, uiControl(tab), 1);
 
   uiTabAppend(tab, "Vod Downloader", VodDownloaderDrawUi());
   uiTabSetMargined(tab, 0, 1);
@@ -56,7 +109,6 @@ int main(int argc, char const *argv[]) {
   uiTabSetMargined(tab, 3, 1);
 
   uiControlShow(uiControl(mainwin));
-  // uiMsgBox(mainwin, "", "");  TODO: check for TwitchDownloaderCLI binary
   uiMain();
 
   return 0;

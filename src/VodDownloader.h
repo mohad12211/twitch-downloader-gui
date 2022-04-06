@@ -2,8 +2,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../libs/stb_image.h"
 
-extern uiWindow *mainwin;
-
 struct handler {
   uiAreaHandler ah;
   uiImageBuffer *img;
