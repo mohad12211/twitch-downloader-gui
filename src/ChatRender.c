@@ -92,22 +92,27 @@ uiControl *ChatRenderDrawUi() {
 
   uiCheckbox *FFZEmotesCheck = uiNewCheckbox("");
   uiCheckboxSetChecked(FFZEmotesCheck, 1);
+  uiControlDisable(uiControl(FFZEmotesCheck));
   uiFormAppend(secondOptionsForm, "FFZ Emotes:", uiControl(FFZEmotesCheck), 0);
 
   uiCheckbox *BTTVEmotesCheck = uiNewCheckbox("");
   uiCheckboxSetChecked(BTTVEmotesCheck, 1);
+  uiControlDisable(uiControl(BTTVEmotesCheck));
   uiFormAppend(secondOptionsForm, "BTTV Emotes:", uiControl(BTTVEmotesCheck), 0);
 
   uiCheckbox *sevenTVEmotesCheck = uiNewCheckbox("");
   uiCheckboxSetChecked(sevenTVEmotesCheck, 1);
+  uiControlDisable(uiControl(sevenTVEmotesCheck));
   uiFormAppend(secondOptionsForm, "7TV Emotes:", uiControl(sevenTVEmotesCheck), 0);
 
   uiCheckbox *subMsgCheck = uiNewCheckbox("");
   uiCheckboxSetChecked(subMsgCheck, 1);
+  uiControlDisable(uiControl(subMsgCheck));
   uiFormAppend(secondOptionsForm, "Sub Messages:", uiControl(subMsgCheck), 0);
 
   uiCheckbox *chatBadgesCheck = uiNewCheckbox("");
   uiCheckboxSetChecked(chatBadgesCheck, 1);
+  uiControlDisable(uiControl(chatBadgesCheck));
   uiFormAppend(secondOptionsForm, "Chat Badges:", uiControl(chatBadgesCheck), 0);
 
   uiCheckbox *generateMaskCheck = uiNewCheckbox("");
