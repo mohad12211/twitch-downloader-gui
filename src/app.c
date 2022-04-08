@@ -93,7 +93,7 @@ int main(int argc, char const *argv[]) {
 
   item = uiMenuAppendQuitItem(menu);
 
-  mainwin = uiNewWindow("TwitchDownloader-gui", 1250, 700, 1);
+  mainwin = uiNewWindow("Twitch Downloader", 1250, 700, 1);
   uiWindowSetMargined(mainwin, 1);
   uiWindowOnClosing(mainwin, onClosing, NULL);
   uiOnShouldQuit(onShouldQuit, mainwin);

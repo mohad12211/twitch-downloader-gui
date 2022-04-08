@@ -1,5 +1,6 @@
 .dockerignore
 Dockerfile
+debpkg/
 build/
 .vscode
 extra/
