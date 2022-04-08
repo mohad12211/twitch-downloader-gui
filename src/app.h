@@ -1,4 +1,5 @@
 #include "../libs/ui.h"
+#define VERSION "1.0"
 
 typedef struct {
   char *configDirectory;
