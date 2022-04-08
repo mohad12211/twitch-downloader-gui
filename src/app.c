@@ -52,6 +52,14 @@ static char *getBinaryPath(char *configFile) {
   return path;
 }
 
+static void clearBinaryPath(uiMenuItem *i, uiWindow *win, void *configFile) {
+  FILE *fp = fopen((char *)configFile, "w");
+  if (fp)
+    fclose(fp);
+  free(binaryPath);
+  binaryPath = strdup("TwitchDownloaderCLI");
+}
+
 int main(int argc, char const *argv[]) {
   uiInitOptions options;
   const char *err;
@@ -76,8 +84,13 @@ int main(int argc, char const *argv[]) {
   ConfigData configData = {configDirectory, configFile};
 
   menu = uiNewMenu("Options");
-  item = uiMenuAppendItem(menu, "Change TwitchDownloaderCLI binary path");
+
+  item = uiMenuAppendItem(menu, "Set TwitchDownloaderCLI binary location");
   uiMenuItemOnClicked(item, setBinaryPath, &configData);
+
+  item = uiMenuAppendItem(menu, "Use TwitchDownloaderCLI binary from the PATH env");
+  uiMenuItemOnClicked(item, clearBinaryPath, configFile);
+
   item = uiMenuAppendQuitItem(menu);
 
   mainwin = uiNewWindow("TwitchDownloader-gui", 1250, 700, 1);
@@ -89,7 +102,7 @@ int main(int argc, char const *argv[]) {
   uiBoxSetPadded(vbox, 1);
   uiWindowSetChild(mainwin, uiControl(vbox));
 
-  uiLabel *update = uiNewLabel("New update is available!");
+  uiLabel *update = uiNewLabel("New <a href=\"https://github.com/mohad12211/TwitchDownloader-gui/releases\">Update</a> is available.");
   uiBoxAppend(vbox, uiControl(update), 0);
   uiControlHide(uiControl(update));
 
