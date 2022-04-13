@@ -3,8 +3,6 @@
 
 #define commandTemplateLength 64
 
-extern uiWindow *mainwin;
-
 struct handler {
   uiAreaHandler ah;
   uiImageBuffer *img;

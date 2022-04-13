@@ -1,7 +1,5 @@
 #include "utils.h"
 
-uiControl *ChatRender(void);
-
 typedef struct {
   char *name;
   char *defaultName;
