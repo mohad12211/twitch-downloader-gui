@@ -170,7 +170,6 @@ uiControl *ChatRenderDrawUi() {
   uiBoxAppend(middleHorizontalBox, uiControl(logForm), 1);
 
   uiButton *renderBtn = uiNewButton("Render");
-  uiControlDisable(uiControl(renderBtn));
   uiGrid *downloadGrid = uiNewGrid();
   uiGridSetPadded(downloadGrid, 1);
   uiGridAppend(downloadGrid, uiControl(renderBtn), 0, 0, 1, 1, 1, uiAlignCenter, 1, uiAlignFill);
@@ -186,10 +185,9 @@ uiControl *ChatRenderDrawUi() {
 
   ChatRenderOptions *renderOptions = malloc(sizeof(ChatRenderOptions));
   *renderOptions = (ChatRenderOptions){
-      fontOptions,        fontColor,   backgroundColor, filePath,          frameRate,    width,          height,         updateTime,
-      leftPadding,        outlineSize, inputArgs,       outputArgs,        outlineCheck, timestampCheck, FFZEmotesCheck, BTTVEmotesCheck,
-      sevenTVEmotesCheck, subMsgCheck, chatBadgesCheck, generateMaskCheck, msgFontStyle, userFontStyle,  containersBox,  codecs,
-      logsEntry,          pBar,        status,          renderBtn,         browseBtn,    NULL,           NULL,
+      fontOptions,  fontColor,      backgroundColor, filePath,        frameRate,          width,       height,          updateTime,        leftPadding,  outlineSize,   inputArgs,     outputArgs,
+      outlineCheck, timestampCheck, FFZEmotesCheck,  BTTVEmotesCheck, sevenTVEmotesCheck, subMsgCheck, chatBadgesCheck, generateMaskCheck, msgFontStyle, userFontStyle, containersBox, codecs,
+      logsEntry,    pBar,           status,          renderBtn,       browseBtn,          NULL,
   };
 
   uiComboboxOnSelected(containersBox, containerChanged, renderOptions);
@@ -203,30 +201,25 @@ uiControl *ChatRenderDrawUi() {
 
 static void browseBtnClicked(uiButton *b, void *args) {
   ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
-  free(renderOptions->fileName);
-  renderOptions->fileName = NULL;
-  char *fileName = uiOpenFile(mainwin, NULL, "JSON File (*.json)|*.json");
-  if (fileName) {
-    uiControlEnable(uiControl(renderOptions->renderBtn));
-    uiEntrySetText(((ChatRenderOptions *)args)->filePath, fileName);
-  } else {
-    uiControlDisable(uiControl(renderOptions->renderBtn));
-    uiEntrySetText(((ChatRenderOptions *)args)->filePath, "");
-  }
-  renderOptions->fileName = fileName;
+  char *chatFile = uiOpenFile(mainwin, NULL, "JSON File (*.json)|*.json");
+  uiEntrySetText(renderOptions->filePath, chatFile ? chatFile : "");
+  uiFreeText(chatFile);
 }
 
 static void renderBtnClicked(uiButton *b, void *args) {
   ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
   int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
-  char *fileName = uiSaveFile(mainwin, NULL, containers[selectedContainer].defaultName, containers[selectedContainer].filter);
-  if (fileName == NULL)
+  char *videoFile = uiSaveFile(mainwin, NULL, containers[selectedContainer].defaultName, containers[selectedContainer].filter);
+  char *chatFile = uiEntryText(renderOptions->filePath);
+  if (videoFile == NULL) {
+    uiFreeText(chatFile);
     return;
+  }
 
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 
-  concat(cmd, 3, binaryPath, " -m ChatRender -i ", renderOptions->fileName);
+  concat(cmd, 3, binaryPath, " -m ChatRender -i ", chatFile);
 
   uiFontDescriptor font;
   uiFontButtonFont(renderOptions->fontOptions, &font);
@@ -283,7 +276,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
 
   concat(cmd, 5, " --input-args='", inputArgs, "' --output-args='", outputArgs, "' ");
 
-  concat(cmd, 3, " -o ", fileName, " 2>&1 ");
+  concat(cmd, 3, " -o ", videoFile, " 2>&1 ");
   printf("%s\n", cmd->memory);
   renderOptions->cmd = cmd;
 
@@ -295,7 +288,8 @@ static void renderBtnClicked(uiButton *b, void *args) {
   free(outlineSize);
   free(inputArgs);
   free(outputArgs);
-  uiFreeText(fileName);
+  uiFreeText(videoFile);
+  uiFreeText(chatFile);
 
   pthread_t thread;
   pthread_create(&thread, NULL, renderTask, args);

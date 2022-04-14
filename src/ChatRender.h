@@ -111,7 +111,6 @@ typedef struct ChatRenderOptions {
   uiButton *renderBtn;
   uiButton *browseBtn;
   string *cmd;
-  char *fileName;
 } ChatRenderOptions;
 
 typedef enum { STATUS, LOGGING, FINISH } Flags;
