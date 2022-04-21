@@ -303,7 +303,7 @@ _UI_EXTERN void uiMenuAppendSeparator(uiMenu *m);
 _UI_EXTERN uiMenu *uiNewMenu(const char *name);
 
 _UI_EXTERN char *uiOpenFile(uiWindow *parent, const char *defaultPath, const char *filter);
-_UI_EXTERN char *uiOpenFolder(uiWindow *parent);
+_UI_EXTERN char *uiOpenFolder(uiWindow *parent, const char *defaultPath);
 _UI_EXTERN char *uiSaveFile(uiWindow *parent, const char *defaultPath, const char *defaultName, const char *filter);
 _UI_EXTERN void uiMsgBox(uiWindow *parent, const char *title, const char *description);
 _UI_EXTERN void uiMsgBoxError(uiWindow *parent, const char *title, const char *description);
