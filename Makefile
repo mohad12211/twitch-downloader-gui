@@ -10,15 +10,17 @@ OBJS=$(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 LIBS=$(wildcard $(LIBDIR)/*.c)
 LIBSOBJS=$(patsubst $(LIBDIR)/%.c, $(LIBOBJDIR)/%.o, $(LIBS)) 
 DEPS=$(patsubst $(SRCDIR)/%.c, $(DEPDIR)/%.d, $(SRCS))
-BIN=$(BINDIR)/TwitchDownloader-gui
+BIN=$(BINDIR)/twitch-downloader-gui
 CFLAGS=-std=c99 -Wswitch-enum -Wpedantic -Wextra -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter -Wno-cast-qual -O2 
 DEPFLAGS=-MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
-LDFLAGS=libs/libui.a `pkg-config --cflags --libs gtk+-3.0` -ldl -lm -pthread -lcurl
+LDFLAGS=`pkg-config --cflags --libs gtk+-3.0` -ldl -lm -pthread -lcurl
 .PHONY: all clean
 
 all: clean $(BIN) 
+all: LDFLAGS += libs/libui.a
 
 debug: CFLAGS += -ggdb3 -fsanitize=address,undefined,leak -Og
+debug: LDFLAGS += libs/libuiDebug.a
 debug: $(BIN)
 
 $(BIN): $(OBJS) $(LIBSOBJS) | $(BINDIR)
