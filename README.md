@@ -5,13 +5,28 @@ The library is still in mid-alpha, but it's a promising project, simple, cross-p
 ## Preview
 
 ## Installation
-Aur:
+Packages available for debian, fedora And Aur.
+
+Pre-compiled packages will ship with `TwitchDownloadCLI` binary. You can specify another binary from the settings.
+If you compile from source/install for another distro. You need to spicify a path for `TwitchDownloaderCLI` in the settings or place it in `/usr/share/twitch-downloader-gui/TwitchDownloaderCLI`
+
 ## Building
+
+### Build Dependencies
+- make
+- libcurl
+
+static library for libui is in the repo, but you can use your own compiled version and just replace it, instructions [here](https://github.com/mohad12211/libui-ng/blob/customs/README.md#quick-building-instructions)
+```
+$ git clone https://github.com/mohad12211/TwitchDownloader-gui.git 
+$ cd TwitchDownloader-gui
+$ make
+```
+binary is inside `build/bin`
 
 ## Does it include all the features? any bugs?
 it includes the basic functionalities, There's no task queue.
 ### Bugs...
-- you can't disable options that are true by default in chatrender (like 3rd party emotes or badges) [#297](https://github.com/lay295/TwitchDownloader/issues/297) 
-- Emojis don't render [#298](https://github.com/lay295/TwitchDownloader/issues/298) (there's a PR to fix it)
-- You can only download the heighest quality for the clip [#289](https://github.com/lay295/TwitchDownloader/issues/289) (will be solved on the next release)
 - You can only download the heighest quality for the vod (I will solve it soon).
+
+Please report any bugs.
