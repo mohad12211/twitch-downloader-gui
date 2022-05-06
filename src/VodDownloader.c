@@ -224,7 +224,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
   concat(cmd, 4, getBinaryPath(), " -m VideoDownload -u '", vodOptions->id, "'");
-  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder")->valuestring);
 
   if (uiCheckboxChecked(vodOptions->cropStartCheck)) {
     char seconds[12];

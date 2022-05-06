@@ -260,7 +260,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
     concat(cmd, 1, " --embed-emotes ");
   }
 
-  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder")->valuestring);
 
   concat(cmd, 3, " -o ", fileName, " 2>&1");
   chatOptions->cmd = cmd;
