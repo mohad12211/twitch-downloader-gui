@@ -3,7 +3,7 @@ This is a gui wrapper for the cli version of the great project [TwitchDownloader
 I used the library [libui-ng](https://github.com/libui-ng/libui-ng) with a few extra [patches](https://github.com/mohad12211/libui-ng). 
 The library is still in mid-alpha, but it's a promising project, simple, cross-platform (macos can be done, I just don't care much about it) and very intuitive.
 ## Preview
-
+https://user-images.githubusercontent.com/51754973/167058680-f961182d-d3be-4793-91f1-724546dc6680.mp4
 ## Installation
 Packages available for debian, fedora And Aur.
 
