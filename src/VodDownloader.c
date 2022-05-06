@@ -223,7 +223,8 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
-  concat(cmd, 4, binaryPath, " -m VideoDownload -u '", vodOptions->id, "'");
+  concat(cmd, 4, getBinaryPath(), " -m VideoDownload -u '", vodOptions->id, "'");
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
 
   if (uiCheckboxChecked(vodOptions->cropStartCheck)) {
     char seconds[12];
@@ -315,20 +316,20 @@ static int setInfo(char *id, VodOptions *vodOptions) {
   int validID = 1;
   string *infoRes = getVodInfo(id);
   cJSON *root = cJSON_Parse((char *)infoRes->memory);
-  if (cJSON_IsNull(json(json(root, "data"), "video"))) {
+  if (cJSON_IsNull(getJson(getJson(root, "data"), "video"))) {
     validID = 0;
     goto err;
   }
   char duration[11];
-  uiLabelSetText(vodOptions->nameLabel, json(json(json(json(root, "data"), "video"), "owner"), "displayName")->valuestring);
-  uiLabelSetText(vodOptions->titleLabel, json(json(json(root, "data"), "video"), "title")->valuestring);
-  int seconds = (json(json(json(root, "data"), "video"), "lengthSeconds")->valueint);
+  uiLabelSetText(vodOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "video"), "owner"), "displayName")->valuestring);
+  uiLabelSetText(vodOptions->titleLabel, getJson(getJson(getJson(root, "data"), "video"), "title")->valuestring);
+  int seconds = (getJson(getJson(getJson(root, "data"), "video"), "lengthSeconds")->valueint);
   sprintf(duration, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
   uiLabelSetText(vodOptions->durationLabel, duration);
-  char *createdLocalTime = getLocalTime(json(json(json(root, "data"), "video"), "createdAt")->valuestring);
+  char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "video"), "createdAt")->valuestring);
   uiLabelSetText(vodOptions->createdLabel, createdLocalTime);
   free(createdLocalTime);
-  cJSON *thumbnail = cJSON_GetArrayItem(json(json(json(root, "data"), "video"), "thumbnailURLs"), 0);
+  cJSON *thumbnail = cJSON_GetArrayItem(getJson(getJson(getJson(root, "data"), "video"), "thumbnailURLs"), 0);
   if (thumbnail)
     setThumbnail(thumbnail->valuestring, vodOptions);
 

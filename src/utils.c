@@ -86,7 +86,7 @@ char *getLocalTime(char *utcTime) {
   return strdup(res);
 }
 
-// fgets but retuns after \n AND \r
+// fgets but retuns after \n OR \r
 char *mygets(char *buf, int n, FILE *f) {
   register int c = 0;
   register char *mbuf = buf;
@@ -121,4 +121,24 @@ void concat(string *str, int count, ...) {
     str->used += strlen(s);
   }
   va_end(ap);
+}
+
+cJSON *getJson(cJSON *obj, char *name) { return cJSON_GetObjectItem(obj, name); }
+
+void setJson(cJSON *obj, char *name, cJSON *item) {
+  if (getJson(obj, name) == NULL) {
+    cJSON_AddItemToObject(obj, name, item);
+  } else {
+    cJSON_ReplaceItemInObject(obj, name, item);
+  }
+}
+
+char *getBinaryPath() {
+  cJSON *binaryJson = getJson(configJson, "binaryPath");
+  cJSON *useCustomBinary = getJson(configJson, "useCustomBinary");
+  if (binaryJson == NULL || useCustomBinary->valueint == 0 || strlen(binaryJson->valuestring) == 0) {
+    return DEFAULT_PATH;
+  } else {
+    return binaryJson->valuestring;
+  }
 }

@@ -238,7 +238,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
-  concat(cmd, 4, binaryPath, " -m ChatDownload -u '", chatOptions->id, "'");
+  concat(cmd, 4, getBinaryPath(), " -m ChatDownload -u '", chatOptions->id, "'");
 
   if (uiCheckboxChecked(chatOptions->cropStartCheck)) {
     char seconds[12];
@@ -259,6 +259,8 @@ static void downloadBtnClicked(uiButton *b, void *data) {
   if (uiCheckboxChecked(chatOptions->embedEmotes)) {
     concat(cmd, 1, " --embed-emotes ");
   }
+
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
 
   concat(cmd, 3, " -o ", fileName, " 2>&1");
   chatOptions->cmd = cmd;
@@ -313,20 +315,20 @@ static int setVodInfo(char *id, ChatDwnOptions *chatOptions) {
   int validID = 1;
   string *infoRes = getVodInfo(id);
   cJSON *root = cJSON_Parse((char *)infoRes->memory);
-  if (cJSON_IsNull(json(json(root, "data"), "video"))) {
+  if (cJSON_IsNull(getJson(getJson(root, "data"), "video"))) {
     validID = 0;
     goto err;
   }
   char duration[11];
-  uiLabelSetText(chatOptions->nameLabel, json(json(json(json(root, "data"), "video"), "owner"), "displayName")->valuestring);
-  uiLabelSetText(chatOptions->titleLabel, json(json(json(root, "data"), "video"), "title")->valuestring);
-  int seconds = (json(json(json(root, "data"), "video"), "lengthSeconds")->valueint);
+  uiLabelSetText(chatOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "video"), "owner"), "displayName")->valuestring);
+  uiLabelSetText(chatOptions->titleLabel, getJson(getJson(getJson(root, "data"), "video"), "title")->valuestring);
+  int seconds = (getJson(getJson(getJson(root, "data"), "video"), "lengthSeconds")->valueint);
   sprintf(duration, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
   uiLabelSetText(chatOptions->durationLabel, duration);
-  char *createdLocalTime = getLocalTime(json(json(json(root, "data"), "video"), "createdAt")->valuestring);
+  char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "video"), "createdAt")->valuestring);
   uiLabelSetText(chatOptions->createdLabel, createdLocalTime);
   free(createdLocalTime);
-  cJSON *thumbnail = cJSON_GetArrayItem(json(json(json(root, "data"), "video"), "thumbnailURLs"), 0);
+  cJSON *thumbnail = cJSON_GetArrayItem(getJson(getJson(getJson(root, "data"), "video"), "thumbnailURLs"), 0);
   if (thumbnail)
     setThumbnail(thumbnail->valuestring, chatOptions);
 
@@ -341,22 +343,22 @@ static int setClipInfo(char *id, ChatDwnOptions *chatOptions) {
   int validID = 1;
   string *infoRes = getClipInfo(id);
   cJSON *root = cJSON_Parse((char *)infoRes->memory);
-  if (cJSON_IsNull(json(json(root, "data"), "clip"))) {
+  if (cJSON_IsNull(getJson(getJson(root, "data"), "clip"))) {
     validID = 0;
     goto err;
-  } else if (cJSON_IsNull(json(json(json(root, "data"), "clip"), "video")) || cJSON_IsNull(json(json(json(root, "data"), "clip"), "videoOffsetSeconds"))) {
+  } else if (cJSON_IsNull(getJson(getJson(getJson(root, "data"), "clip"), "video")) || cJSON_IsNull(getJson(getJson(getJson(root, "data"), "clip"), "videoOffsetSeconds"))) {
     validID = 0;
     goto err;
   }
   char duration[11];
-  uiLabelSetText(chatOptions->nameLabel, json(json(json(json(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
-  uiLabelSetText(chatOptions->titleLabel, json(json(json(root, "data"), "clip"), "title")->valuestring);
-  sprintf(duration, "%d %s", (json(json(json(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
+  uiLabelSetText(chatOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
+  uiLabelSetText(chatOptions->titleLabel, getJson(getJson(getJson(root, "data"), "clip"), "title")->valuestring);
+  sprintf(duration, "%d %s", (getJson(getJson(getJson(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
   uiLabelSetText(chatOptions->durationLabel, duration);
-  char *createdLocalTime = getLocalTime(json(json(json(root, "data"), "clip"), "createdAt")->valuestring);
+  char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "clip"), "createdAt")->valuestring);
   uiLabelSetText(chatOptions->createdLabel, createdLocalTime);
   free(createdLocalTime);
-  cJSON *thumbnail = json(json(json(root, "data"), "clip"), "thumbnailURL");
+  cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
   if (thumbnail)
     setThumbnail(thumbnail->valuestring, chatOptions);
 

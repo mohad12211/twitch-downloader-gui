@@ -82,7 +82,6 @@ uiControl *ClipDownloaderDrawUi() {
 
   uiBoxAppend(middleHorizontalBox, uiControl(uiNewVerticalSeparator()), 0);
 
-  // BUG, will be solved in the next release: https://github.com/lay295/TwitchDownloader/issues/289
   uiForm *qualityForm = uiNewForm();
   uiFormSetPadded(qualityForm, 1);
   uiCombobox *qualities = uiNewCombobox();
@@ -153,11 +152,14 @@ static void downloadBtnClicked(uiButton *b, void *data) {
   }
 
   ClipOptions *clipOptions = (ClipOptions *)data;
-  // because the command is always the same for ClipDownload it's easier to make a template with format string
-  // TODO: maybe change it like the others with concat?
-  char cmd[commandTemplateLength + strlen(binaryPath) + strlen(clipOptions->id) + strlen(fileName) + 1];
-  sprintf(cmd, "%s -m ClipDownload -u '%s' -q '%s' -o %s 2>&1", binaryPath, clipOptions->id, qualityArray[uiComboboxSelected(clipOptions->qualities)], fileName);
-  clipOptions->cmd = strdup(cmd);
+  string *cmd = malloc(sizeof(string));
+  *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
+  concat(cmd, 3, getBinaryPath(), " -m ClipDownload -u ", clipOptions->id);
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
+  concat(cmd, 2, " -q ", qualityArray[uiComboboxSelected(clipOptions->qualities)]);
+  concat(cmd, 3, " -o ", fileName, " 2>&1");
+
+  clipOptions->cmd = cmd;
 
   uiFreeText(fileName);
 
@@ -171,7 +173,7 @@ static void *downloadTask(void *args) {
   char buf[200];
   FILE *fp;
 
-  if ((fp = popen(clipOptions->cmd, "r")) == NULL) {
+  if ((fp = popen((char *)clipOptions->cmd->memory, "r")) == NULL) {
     printf("Error opening pipe!\n");
     return NULL;
   }
@@ -190,6 +192,7 @@ static void *downloadTask(void *args) {
   *data = (uiData){.clipOptions = clipOptions, .flag = FINISH, .i = pclose(fp)};
   uiQueueMain(runOnUiThread, data);
 
+  free(clipOptions->cmd->memory);
   free(clipOptions->cmd);
   clipOptions->cmd = NULL;
 
@@ -203,7 +206,7 @@ static int setQualities(char *id, uiCombobox *cBox) {
   string *qualityRes = getClipQualities(id);
   uiComboboxClear(cBox);
   root = cJSON_Parse((char *)qualityRes->memory);
-  qualities = json(json(json(cJSON_GetArrayItem(root, 0), "data"), "clip"), "videoQualities");
+  qualities = getJson(getJson(getJson(cJSON_GetArrayItem(root, 0), "data"), "clip"), "videoQualities");
   if (qualities == NULL) {
     validID = 0;
     goto err;
@@ -211,8 +214,8 @@ static int setQualities(char *id, uiCombobox *cBox) {
   cJSON *quality = NULL;
   int i = 0;
   cJSON_ArrayForEach(quality, qualities) {
-    int fr = json(quality, "frameRate")->valueint;
-    char *res = json(quality, "quality")->valuestring;
+    int fr = getJson(quality, "frameRate")->valueint;
+    char *res = getJson(quality, "quality")->valuestring;
     char qualityString[8];
     sprintf(qualityString, "%sp%d", res, fr);
     sprintf(qualityArray[i], "%sp%d", res, fr);
@@ -232,13 +235,13 @@ static void setInfo(char *id, ClipOptions *clipOptions) {
   string *infoRes = getClipInfo(id);
   cJSON *root = cJSON_Parse((char *)infoRes->memory);
   char duration[11];
-  uiLabelSetText(clipOptions->nameLabel, json(json(json(json(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
-  uiLabelSetText(clipOptions->titleLabel, json(json(json(root, "data"), "clip"), "title")->valuestring);
-  sprintf(duration, "%d %s", (json(json(json(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
+  uiLabelSetText(clipOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
+  uiLabelSetText(clipOptions->titleLabel, getJson(getJson(getJson(root, "data"), "clip"), "title")->valuestring);
+  sprintf(duration, "%d %s", (getJson(getJson(getJson(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
   uiLabelSetText(clipOptions->durationLabel, duration);
-  char *createdLocalTime = getLocalTime(json(json(json(root, "data"), "clip"), "createdAt")->valuestring);
+  char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "clip"), "createdAt")->valuestring);
   uiLabelSetText(clipOptions->createdLabel, createdLocalTime);
-  cJSON *thumbnail = json(json(json(root, "data"), "clip"), "thumbnailURL");
+  cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
   if (thumbnail)
     setThumbnail(thumbnail->valuestring, clipOptions);
 

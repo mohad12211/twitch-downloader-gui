@@ -26,7 +26,7 @@ typedef struct {
   uiButton *downloadBtn;
   uiButton *infoBtn;
   char *id;
-  char *cmd;
+  string *cmd;
   uiArea *imageArea;
   struct handler *handler;
 } ClipOptions;

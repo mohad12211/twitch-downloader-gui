@@ -219,7 +219,8 @@ static void renderBtnClicked(uiButton *b, void *args) {
   string *cmd = malloc(sizeof(string));
   *cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 
-  concat(cmd, 3, binaryPath, " -m ChatRender -i ", chatFile);
+  concat(cmd, 3, getBinaryPath(), " -m ChatRender -i ", chatFile);
+  concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder"));
 
   uiFontDescriptor font;
   uiFontButtonFont(renderOptions->fontOptions, &font);
