@@ -14,7 +14,6 @@ static int onClosing(uiWindow *w, void *data) {
 }
 
 static int onShouldQuit(void *data) {
-  uiControlDestroy(uiControl(uiWindow(data)));
   saveConfig();
   return 1;
 }

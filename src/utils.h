@@ -25,10 +25,7 @@ typedef struct {
 enum { GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL };
 
 extern uiWindow *mainwin;
-// extern char *binaryPath;
-// extern char *tempFolder;
 extern char *configFile;
-// extern int useCustomBinary;
 extern cJSON *configJson;
 
 size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
