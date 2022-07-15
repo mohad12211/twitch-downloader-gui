@@ -3,39 +3,31 @@
 
 #define commandTemplateLength 64
 
-struct handler {
-  uiAreaHandler ah;
-  uiImageBuffer *img;
-  unsigned char *binaryData;
-  int width;
-  int height;
-};
-
-char qualityArray[5][8];
-
 typedef struct {
-  uiCombobox *qualities;
-  uiEntry *linkEntry;
-  uiLabel *nameLabel;
-  uiLabel *titleLabel;
-  uiLabel *durationLabel;
-  uiLabel *createdLabel;
-  uiMultilineEntry *logsEntry;
-  uiProgressBar *pBar;
-  uiLabel *status;
-  uiButton *downloadBtn;
-  uiButton *infoBtn;
-  char *id;
-  string *cmd;
-  uiArea *imageArea;
-  struct handler *handler;
+	uiCombobox *qualities;
+	uiEntry *linkEntry;
+	uiLabel *nameLabel;
+	uiLabel *titleLabel;
+	uiLabel *durationLabel;
+	uiLabel *createdLabel;
+	uiMultilineEntry *logsEntry;
+	uiProgressBar *pBar;
+	uiLabel *status;
+	uiButton *downloadBtn;
+	uiButton *infoBtn;
+	char *id;
+	string *cmd;
+	uiArea *imageArea;
+	struct handler *handler;
 } ClipOptions;
 
 typedef enum { DOWNLOADING, LOGGING, FINISH } Flags;
 
 typedef struct {
-  ClipOptions *clipOptions;
-  Flags flag;
-  int i;
-  char *buf;
+	ClipOptions *clipOptions;
+	Flags flag;
+	int i;
+	char *buf;
 } uiData;
+
+uiControl *ClipDownloaderDrawUi(void);
