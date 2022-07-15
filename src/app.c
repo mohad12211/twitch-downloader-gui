@@ -1,10 +1,4 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <string.h>
 #include "app.h"
 
 static int onClosing(uiWindow *w, void *data) {
@@ -14,6 +8,7 @@ static int onClosing(uiWindow *w, void *data) {
 }
 
 static int onShouldQuit(void *data) {
+  uiControlDestroy(uiControl(data));
   saveConfig();
   return 1;
 }
@@ -122,6 +117,7 @@ int main(int argc, char const *argv[]) {
 
   uiControlShow(uiControl(mainwin));
   uiMain();
+  uiUninit();
 
   return 0;
 }
