@@ -17,10 +17,18 @@
 #define DEFAULT_PATH "/usr/share/twitch-downloader-gui/TwitchDownloaderCLI"
 
 typedef struct {
-  unsigned char *memory;
-  size_t used;
-  size_t size;
-} string;
+	unsigned char *memory;
+	size_t used;
+	size_t size;
+} string;	 // TODO: maybe change this name?
+
+struct handler {
+	uiAreaHandler ah;
+	uiImageBuffer *img;
+	unsigned char *binaryData;
+	int width;
+	int height;
+};
 
 enum { GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL };
 
