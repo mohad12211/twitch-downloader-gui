@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Twitch Downloader
+Comment=Twitch VOD/Clip Downloader - Chat Download/Render/Replay (GUI for linux)
+Type=Application
+Exec=/usr/bin/twitch-downloader-gui
+Terminal=false
+Categories=Utility;GTK;Audio;AudioVideo;Network;
+StartupWMClass=twitch-downloader-gui
+Icon=twitch-downloader-gui
+
