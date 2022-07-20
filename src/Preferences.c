@@ -1,5 +1,7 @@
 #include "Preferences.h"
 
+static PreferencesOptions *prefOptions;
+
 static int preferencesOnClose(uiWindow *w, void *data);
 static void tempFileBrowseClicked(uiButton *b, void *data);
 static void binaryPathClicked(uiButton *b, void *data);
@@ -55,7 +57,7 @@ void ShowPreferences(void) {
 	uiBoxAppend(customBinaryBox, uiControl(browseBinaryBtn), 0);
 	uiBoxAppend(mainVerticalBox, uiControl(customBinaryBox), 0);
 
-	PreferencesOptions *prefOptions = malloc(sizeof(PreferencesOptions));
+	prefOptions = malloc(sizeof(PreferencesOptions));
 	*prefOptions = (PreferencesOptions){tempFolderEntry, customBinaryEntry, useCustomBinaryCheck};
 
 	uiButtonOnClicked(browseTempFolderBtn, tempFileBrowseClicked, tempFolderEntry);
@@ -65,13 +67,11 @@ void ShowPreferences(void) {
 	uiWindow *preferencesWindow = uiNewWindow("Preferences", 500, 300, 0);
 	uiWindowSetMargined(preferencesWindow, 1);
 	uiWindowSetChild(preferencesWindow, uiControl(mainVerticalBox));
-	uiWindowOnClosing(preferencesWindow, preferencesOnClose, prefOptions);
+	uiWindowOnClosing(preferencesWindow, preferencesOnClose, NULL);
 	uiControlShow(uiControl(preferencesWindow));
 }
 
 static int preferencesOnClose(uiWindow *w, void *data) {
-	PreferencesOptions *prefOptions = (PreferencesOptions *)data;
-
 	char *selectedCustomBinary = uiEntryText(prefOptions->customBinaryEntry);
 	if (strlen(selectedCustomBinary)) {
 		setJson(configJson, "binaryPath", cJSON_CreateString(selectedCustomBinary));

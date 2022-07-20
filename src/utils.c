@@ -51,7 +51,8 @@ string *getClipQualities(const char *id) {
 
 string *getClipInfo(const char *id) {
 	char *base =
-			"{\"query\":\"query{clip(slug:\\\"%s\\\"){title,durationSeconds,createdAt,broadcaster{displayName},thumbnailURL(width:480,height:272),videoOffsetSeconds,video{id}}}\",\"variables\":{}}";
+			"{\"query\":\"query{clip(slug:\\\"%s\\\"){title,durationSeconds,createdAt,broadcaster{displayName},thumbnailURL(width:480,height:272),videoOffsetSeconds,video{id}}"
+			"}\",\"variables\":{}}";
 	char req[strlen(base) + strlen(id) - 1];
 	sprintf(req, base, id);
 	return performRequest(req);

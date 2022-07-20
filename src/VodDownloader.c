@@ -1,13 +1,14 @@
 #include "VodDownloader.h"
 
+static VodOptions *vodOptions;
+
 static void downloadBtnClicked(uiButton *b, void *data);
 static void infoBtnClicked(uiButton *b, void *data);
 static void cropStartToggle(uiCheckbox *c, void *data);
 static void cropEndToggle(uiCheckbox *c, void *data);
 static char *getId(char *link);
-static int setInfo(char *id, VodOptions *vodOptions);
-static void setThumbnail(char *link, VodOptions *VodOptions);
-static void clearFreeUi(VodOptions *vodOptions);
+static int setInfo(char *id);
+static void setThumbnail(char *link);
 static void *downloadTask(void *args);
 static void runOnUiThread(void *args);
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e);
@@ -173,29 +174,28 @@ uiControl *VodDownloaderDrawUi(void) {
 	uiBoxAppend(pBarBox, uiControl(pBar), 1);
 	uiBoxAppend(mainVerticalBox, uiControl(pBarBox), 0);
 
-	VodOptions *vodOptions = malloc(sizeof(VodOptions));
+	vodOptions = malloc(sizeof(VodOptions));
 	*vodOptions = (VodOptions){
 			linkEntry, nameLabel, titleLabel, durationLabel,	createdLabel, logsEntry,		 pBar,					 status,			downloadBtn, infoBtn,
 			NULL,			 NULL,			0,					cropStartCheck, cropEndCheck, startSpinsBox, cropStartBox,	 endSpinsBox, cropEndBox,	 startHour,
 			startMin,	 startSec,	endHour,		endMin,					endSec,				OAuth,				 dwnThreadsSpin, imageArea,		handler,
 	};
 
-	uiButtonOnClicked(infoBtn, infoBtnClicked, vodOptions);
-	uiButtonOnClicked(downloadBtn, downloadBtnClicked, vodOptions);
+	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
+	uiButtonOnClicked(downloadBtn, downloadBtnClicked, NULL);
 
 	return uiControl(mainVerticalBox);
 }
 
 static void infoBtnClicked(uiButton *b, void *data) {
-	VodOptions *vodOptions = (VodOptions *)data;
-	clearFreeUi(vodOptions);
+	VodDownloaderResetUi();
 	char *link = uiEntryText(vodOptions->linkEntry);
 	char *id = getId(link);
 	if (id == NULL) {
 		uiMsgBoxError(mainwin, "Error", "Invalid Url");
 		goto err;
 	}
-	int validID = setInfo(id, vodOptions);
+	int validID = setInfo(id);
 	if (!validID) {
 		uiMsgBoxError(mainwin, "Error", "Invalid Vod ID");
 		free(id);
@@ -215,7 +215,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 		return;
 	}
 
-	VodOptions *vodOptions = (VodOptions *)data;
 	int hour, sec, min;
 	char *durationString = uiLabelText(vodOptions->durationLabel);
 	sscanf(durationString, "%d:%d:%d", &hour, &min, &sec);
@@ -267,7 +266,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 }
 
 static void *downloadTask(void *args) {
-	VodOptions *vodOptions = (VodOptions *)args;
 	char buf[200];
 	FILE *fp;
 
@@ -277,7 +275,7 @@ static void *downloadTask(void *args) {
 	}
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.vodOptions = vodOptions, .flag = PREPARE};
+	*data = (uiData){.flag = PREPARE};
 	uiQueueMain(runOnUiThread, data);
 
 	while (mygets(buf, 200, fp) != NULL) {
@@ -285,24 +283,24 @@ static void *downloadTask(void *args) {
 		if (strstr(buf, "Downloading")) {
 			int offset = strlen("[STATUS] - Downloading ");
 			int percentage = atoi(buf + offset);
-			*logData = (uiData){.i = percentage, .vodOptions = vodOptions, .flag = DOWNLOADING};
+			*logData = (uiData){.i = percentage, .flag = DOWNLOADING};
 		} else if (strstr(buf, "Combining")) {
-			*logData = (uiData){.vodOptions = vodOptions, .flag = COMBINING};
+			*logData = (uiData){.flag = COMBINING};
 		} else if (strstr(buf, "Finalizing")) {
-			*logData = (uiData){.vodOptions = vodOptions, .flag = FINALIZING};
+			*logData = (uiData){.flag = FINALIZING};
 		} else if (strstr(buf, "time=")) {
 			struct tm progress;
 			strptime(strstr(buf, "time=") + 5, "%H:%M:%S", &progress);
 			float progressSeconds = progress.tm_hour * 3600 + progress.tm_min * 60 + progress.tm_sec;
-			*logData = (uiData){.i = progressSeconds, .vodOptions = vodOptions, .flag = PROGRESS};
+			*logData = (uiData){.i = progressSeconds, .flag = PROGRESS};
 		} else {
-			*logData = (uiData){.vodOptions = vodOptions, .flag = LOGGING, .buf = strdup(buf)};
+			*logData = (uiData){.flag = LOGGING, .buf = strdup(buf)};
 		}
 		uiQueueMain(runOnUiThread, logData);
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.vodOptions = vodOptions, .flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(vodOptions->cmd->memory);
@@ -312,7 +310,7 @@ static void *downloadTask(void *args) {
 	return NULL;
 }
 
-static int setInfo(char *id, VodOptions *vodOptions) {
+static int setInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getVodInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
@@ -331,7 +329,7 @@ static int setInfo(char *id, VodOptions *vodOptions) {
 	free(createdLocalTime);
 	cJSON *thumbnail = cJSON_GetArrayItem(getJson(getJson(getJson(root, "data"), "video"), "thumbnailURLs"), 0);
 	if (thumbnail)
-		setThumbnail(thumbnail->valuestring, vodOptions);
+		setThumbnail(thumbnail->valuestring);
 
 err:
 	free(infoRes->memory);
@@ -343,7 +341,7 @@ err:
 // https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
 // stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian, so little-endian, so it will be BGRA
 // so I have to swap the B and the R, the image is 320*180 so should be fast.
-static void setThumbnail(char *link, VodOptions *vodOptions) {
+static void setThumbnail(char *link) {
 	int x, y, n;
 	string *response = requestImage(link);
 	vodOptions->handler->binaryData = stbi_load_from_memory(response->memory, response->used, &x, &y, &n, 4);
@@ -402,7 +400,6 @@ static void cropEndToggle(uiCheckbox *c, void *data) {
 
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
-	VodOptions *vodOptions = data->vodOptions;
 	switch (data->flag) {
 		case PREPARE:
 			uiControlDisable(uiControl(vodOptions->downloadBtn));
@@ -449,7 +446,7 @@ static void runOnUiThread(void *args) {
 	free(data);
 }
 
-static void clearFreeUi(VodOptions *vodOptions) {
+void VodDownloaderResetUi(void) {
 	free(vodOptions->id);
 	vodOptions->id = NULL;
 	stbi_image_free(vodOptions->handler->binaryData);

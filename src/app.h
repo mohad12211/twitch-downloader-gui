@@ -1,8 +1,8 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "utils.h"
+#include "ChatDownloader.h"
+#include "ChatRender.h"
+#include "ClipDownloader.h"
+#include "VodDownloader.h"
+#include "Preferences.h"
 #define VERSION "1.0"
-
-uiControl *VodDownloaderDrawUi(void);
-uiControl *ClipDownloaderDrawUi(void);
-uiControl *ChatDownloaderDrawUi(void);
-uiControl *ChatRenderDrawUi(void);
-void ShowPreferences(void);

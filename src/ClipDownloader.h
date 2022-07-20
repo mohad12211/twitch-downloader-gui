@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "../libs/stb_image.h"
 
 #define commandTemplateLength 64
 
@@ -21,13 +20,5 @@ typedef struct {
 	struct handler *handler;
 } ClipOptions;
 
-typedef enum { DOWNLOADING, LOGGING, FINISH } Flags;
-
-typedef struct {
-	ClipOptions *clipOptions;
-	Flags flag;
-	int i;
-	char *buf;
-} uiData;
-
 uiControl *ClipDownloaderDrawUi(void);
+void ClipDownloaderResetUi(void);

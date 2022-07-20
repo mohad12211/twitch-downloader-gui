@@ -1,3 +1,5 @@
+#ifndef UTILS_H
+#define UTILS_H
 #define _GNU_SOURCE
 #include <time.h>
 #include <stdlib.h>
@@ -12,15 +14,14 @@
 
 #include "../libs/ui.h"
 #include "../libs/cJSON.h"
+#include "../libs/stb_image.h"
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define DEFAULT_PATH "/usr/share/twitch-downloader-gui/TwitchDownloaderCLI"
 
-typedef struct {
-	unsigned char *memory;
-	size_t used;
-	size_t size;
-} string;	 // TODO: maybe change this name?
+typedef enum { PREPARE, DOWNLOADING, COMBINING, FINALIZING, PROGRESS, LOGGING, FINISH, STATUS } Flags;
+
+enum { GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL };
 
 struct handler {
 	uiAreaHandler ah;
@@ -30,7 +31,17 @@ struct handler {
 	int height;
 };
 
-enum { GTK_ORIENTATION_HORIZONTAL, GTK_ORIENTATION_VERTICAL };
+typedef struct {
+	unsigned char *memory;
+	size_t used;
+	size_t size;
+} string;	 // TODO: maybe change this name?
+
+typedef struct {
+	int i;
+	char *buf;
+	Flags flag;
+} uiData;
 
 extern uiWindow *mainwin;
 extern char *configFile;
@@ -48,3 +59,5 @@ void concat(string *str, int count, ...);
 cJSON *getJson(cJSON *obj, char *name);
 void setJson(cJSON *obj, char *name, cJSON *item);
 char *getBinaryPath(void);
+
+#endif

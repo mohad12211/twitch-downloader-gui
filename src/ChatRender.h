@@ -1,85 +1,5 @@
 #include "utils.h"
 
-typedef struct {
-	const char *const name;
-	const char *const defaultName;
-	const char *const filter;
-	const struct codec {
-		const char *const name;
-		const char *const inputArgs;
-		const char *const outputArgs;
-	} supportedCodecs[4];
-} container;
-
-const container containers[4] = {{"MP4",
-																	"chat.mp4",
-																	"mp4 File (*.mp4)|*.mp4",
-																	{{"H264",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""},
-																	 {"H265",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""}}},
-																 {"MOV",
-																	"chat.mov",
-																	"mov file (*.mov)|*.mov",
-																	{{"H264",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""},
-																	 {"H265",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""},
-																	 {"ProRes",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v prores_ks -qscale:v 62 -pix_fmt argb \"{save_path}\""},
-																	 {"RLE",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v qtrle -pix_fmt argb \"{save_path}\""}}},
-																 {"WEBM",
-																	"chat.webm",
-																	"webm File (*.webm)|*.webm",
-																	{{"VP8",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 "
-																		"\"{save_path}\""},
-																	 {"VP9",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}},
-																 {"MKV",
-																	"chat.mkv",
-																	"mkv File (*.mkv)|*.mkv",
-																	{{"H264",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""},
-																	 {"H265",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
-																		"\"{save_path}\""},
-																	 {"VP8",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 "
-																		"\"{save_path}\""},
-																	 {"VP9",
-																		"-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
-																		"{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-																		"-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}}};
-
 typedef struct ChatRenderOptions {
 	uiFontButton *fontOptions;
 	uiColorButton *fontColor;
@@ -113,13 +33,15 @@ typedef struct ChatRenderOptions {
 	string *cmd;
 } ChatRenderOptions;
 
-typedef enum { STATUS, LOGGING, FINISH } Flags;
-
 typedef struct {
-	ChatRenderOptions *renderOptions;
-	Flags flag;
-	int i;
-	char *buf;
-} uiData;
+	const char *const name;
+	const char *const defaultName;
+	const char *const filter;
+	const struct codec {
+		const char *const name;
+		const char *const inputArgs;
+		const char *const outputArgs;
+	} supportedCodecs[4];
+} container;
 
 uiControl *ChatRenderDrawUi(void);

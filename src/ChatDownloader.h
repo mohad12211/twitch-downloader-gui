@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "../libs/stb_image.h"
 
 typedef struct {
 	uiEntry *linkEntry;
@@ -33,13 +32,5 @@ typedef struct {
 	struct handler *handler;
 } ChatDwnOptions;
 
-typedef enum { DOWNLOADING, PROGRESS, LOGGING, FINISH } Flags;
-
-typedef struct {
-	ChatDwnOptions *chatOptions;
-	Flags flag;
-	int i;
-	char *buf;
-} uiData;
-
 uiControl *ChatDownloaderDrawUi(void);
+void ChatDownloaderResetUi(void);

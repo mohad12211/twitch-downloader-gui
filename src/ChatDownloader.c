@@ -1,14 +1,14 @@
 #include "ChatDownloader.h"
 
 const char *const timeFormatsArr[] = {"Utc", "Relative", "None"};
+static ChatDwnOptions *chatOptions;
 
 static void downloadFormatSelect(uiRadioButtons *r, void *data);
 static void infoBtnCallBack(uiButton *b, void *data);
 static void downloadBtnClicked(uiButton *b, void *data);
 static void *downloadTask(void *args);
-static int setClipInfo(char *id, ChatDwnOptions *chatOptions);
-static int setVodInfo(char *id, ChatDwnOptions *chatOptions);
-static void clearFreeUi(ChatDwnOptions *chatOptions);
+static int setClipInfo(char *id);
+static int setVodInfo(char *i);
 static int getId(char *link, char **id);
 static void cropStartToggle(uiCheckbox *c, void *data);
 static void cropEndToggle(uiCheckbox *c, void *data);
@@ -18,7 +18,7 @@ static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left);
 static void handlerDragBroken(uiAreaHandler *ah, uiArea *area);
 static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e);
 static void handlerDraw(uiAreaHandler *ah, uiArea *area, uiAreaDrawParams *p);
-static void setThumbnail(char *link, ChatDwnOptions *chatOptions);
+static void setThumbnail(char *link);
 
 uiControl *ChatDownloaderDrawUi(void) {
 	uiBox *mainVerticalBox = uiNewVerticalBox();
@@ -174,22 +174,21 @@ uiControl *ChatDownloaderDrawUi(void) {
 	uiBoxAppend(pBarBox, uiControl(pBar), 1);
 	uiBoxAppend(mainVerticalBox, uiControl(pBarBox), 0);
 
-	ChatDwnOptions *chatOptions = malloc(sizeof(ChatDwnOptions));
+	chatOptions = malloc(sizeof(ChatDwnOptions));
 	*chatOptions = (ChatDwnOptions){
 			linkEntry, nameLabel, titleLabel,			 durationLabel, createdLabel,		logsEntry,		pBar,					 status,			 downloadBtn, infoBtn,
 			NULL,			 NULL,			downloadFormats, timeFormats,		cropStartCheck, cropEndCheck, startSpinsBox, cropStartBox, endSpinsBox, cropEndBox,
 			startHour, startMin,	startSec,				 endHour,				endMin,					endSec,				embedEmotes,	 imageArea,		 handler,
 	};
 
-	uiButtonOnClicked(infoBtn, infoBtnCallBack, chatOptions);
-	uiButtonOnClicked(downloadBtn, downloadBtnClicked, chatOptions);
+	uiButtonOnClicked(infoBtn, infoBtnCallBack, NULL);
+	uiButtonOnClicked(downloadBtn, downloadBtnClicked, NULL);
 
 	return uiControl(mainVerticalBox);
 }
 
 static void infoBtnCallBack(uiButton *b, void *data) {
-	ChatDwnOptions *chatOptions = (ChatDwnOptions *)data;
-	clearFreeUi(chatOptions);
+	ChatDownloaderResetUi();
 	char *link = uiEntryText(chatOptions->linkEntry);
 	char *id = NULL;
 	int idType = getId(link, &id);
@@ -200,7 +199,7 @@ static void infoBtnCallBack(uiButton *b, void *data) {
 			uiMsgBoxError(mainwin, "Error", "Invalid Url");
 			break;
 		case 1:
-			validClipID = setClipInfo(id, chatOptions);
+			validClipID = setClipInfo(id);
 			if (validClipID) {
 				chatOptions->id = id;
 				uiControlEnable(uiControl(chatOptions->downloadBtn));
@@ -210,7 +209,7 @@ static void infoBtnCallBack(uiButton *b, void *data) {
 			}
 			break;
 		case 2:
-			validVodID = setVodInfo(id, chatOptions);
+			validVodID = setVodInfo(id);
 			if (validVodID) {
 				uiControlEnable(uiControl(chatOptions->cropStartBox));
 				uiControlEnable(uiControl(chatOptions->cropEndBox));
@@ -228,7 +227,6 @@ static void infoBtnCallBack(uiButton *b, void *data) {
 }
 
 static void downloadBtnClicked(uiButton *b, void *data) {
-	ChatDwnOptions *chatOptions = (ChatDwnOptions *)data;
 	int format = uiRadioButtonsSelected(chatOptions->downloadFormats);
 	// TODO: change this to what I *will* be using for ChatRender containersBox
 	char *defaultName = format == 0 ? "chat.json" : "chat.txt";
@@ -275,7 +273,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 }
 
 static void *downloadTask(void *args) {
-	ChatDwnOptions *chatOptions = (ChatDwnOptions *)args;
 	char buf[200];
 	FILE *fp;
 
@@ -285,7 +282,7 @@ static void *downloadTask(void *args) {
 	}
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.chatOptions = chatOptions, .flag = DOWNLOADING};
+	*data = (uiData){.flag = DOWNLOADING};
 	uiQueueMain(runOnUiThread, data);
 
 	while (mygets(buf, 200, fp) != NULL) {
@@ -293,17 +290,17 @@ static void *downloadTask(void *args) {
 		if (strstr(buf, "%")) {
 			int offset = strlen("[STATUS] - Downloading ");
 			int percentage = atoi(buf + offset);
-			*logData = (uiData){.chatOptions = chatOptions, .flag = PROGRESS, .i = percentage};
+			*logData = (uiData){.flag = PROGRESS, .i = percentage};
 		} else if (strstr(buf, "+")) {
-			*logData = (uiData){.chatOptions = chatOptions, .flag = PROGRESS, .i = -1};
+			*logData = (uiData){.flag = PROGRESS, .i = -1};
 		} else {
-			*logData = (uiData){.chatOptions = chatOptions, .flag = LOGGING, .buf = strdup(buf)};
+			*logData = (uiData){.flag = LOGGING, .buf = strdup(buf)};
 		}
 		uiQueueMain(runOnUiThread, logData);
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.chatOptions = chatOptions, .flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(chatOptions->cmd->memory);
@@ -313,7 +310,7 @@ static void *downloadTask(void *args) {
 	return NULL;
 }
 
-static int setVodInfo(char *id, ChatDwnOptions *chatOptions) {
+static int setVodInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getVodInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
@@ -332,7 +329,7 @@ static int setVodInfo(char *id, ChatDwnOptions *chatOptions) {
 	free(createdLocalTime);
 	cJSON *thumbnail = cJSON_GetArrayItem(getJson(getJson(getJson(root, "data"), "video"), "thumbnailURLs"), 0);
 	if (thumbnail)
-		setThumbnail(thumbnail->valuestring, chatOptions);
+		setThumbnail(thumbnail->valuestring);
 
 err:
 	free(infoRes->memory);
@@ -341,7 +338,7 @@ err:
 	return validID;
 }
 
-static int setClipInfo(char *id, ChatDwnOptions *chatOptions) {
+static int setClipInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getClipInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
@@ -363,7 +360,7 @@ static int setClipInfo(char *id, ChatDwnOptions *chatOptions) {
 	free(createdLocalTime);
 	cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
 	if (thumbnail)
-		setThumbnail(thumbnail->valuestring, chatOptions);
+		setThumbnail(thumbnail->valuestring);
 
 err:
 	free(infoRes->memory);
@@ -375,7 +372,7 @@ err:
 // https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
 // stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian, so little-endian, so it will be BGRA
 // so I have to swap the B and the R, the image is 480x272 so should be fast.
-static void setThumbnail(char *link, ChatDwnOptions *chatOptions) {
+static void setThumbnail(char *link) {
 	int x, y, n;
 	string *response = requestImage(link);
 	chatOptions->handler->binaryData = stbi_load_from_memory(response->memory, response->used, &x, &y, &n, 4);
@@ -450,7 +447,6 @@ static void cropEndToggle(uiCheckbox *c, void *data) {
 
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
-	ChatDwnOptions *chatOptions = data->chatOptions;
 	switch (data->flag) {
 		case DOWNLOADING:
 			uiControlDisable(uiControl(chatOptions->downloadBtn));
@@ -483,12 +479,13 @@ static void runOnUiThread(void *args) {
 			break;
 
 		default:
+			fprintf(stderr, "unknown flag %d", data->flag);
 			break;
 	}
 	free(data);
 }
 
-static void clearFreeUi(ChatDwnOptions *chatOptions) {
+void ChatDownloaderResetUi(void) {
 	free(chatOptions->id);
 	chatOptions->id = NULL;
 	stbi_image_free(chatOptions->handler->binaryData);

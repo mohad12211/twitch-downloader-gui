@@ -1,5 +1,8 @@
 #include "ChatRender.h"
 
+static ChatRenderOptions *renderOptions;
+static const container containers[4];
+
 static void resetArgs(uiButton *b, void *args);
 static void containerChanged(uiCombobox *c, void *args);
 static void codecChanged(uiCombobox *c, void *args);
@@ -182,7 +185,7 @@ uiControl *ChatRenderDrawUi(void) {
 	uiBoxAppend(pBarBox, uiControl(pBar), 1);
 	uiBoxAppend(mainVerticalBox, uiControl(pBarBox), 0);
 
-	ChatRenderOptions *renderOptions = malloc(sizeof(ChatRenderOptions));
+	renderOptions = malloc(sizeof(ChatRenderOptions));
 	*renderOptions = (ChatRenderOptions){
 			fontOptions,				fontColor,	 backgroundColor, filePath,					 frameRate,		 width,					 height,				 updateTime,
 			leftPadding,				outlineSize, inputArgs,				outputArgs,				 outlineCheck, timestampCheck, FFZEmotesCheck, BTTVEmotesCheck,
@@ -190,24 +193,22 @@ uiControl *ChatRenderDrawUi(void) {
 			logsEntry,					pBar,				 status,					renderBtn,				 browseBtn,		 NULL,
 	};
 
-	uiComboboxOnSelected(containersBox, containerChanged, renderOptions);
-	uiComboboxOnSelected(codecs, codecChanged, renderOptions);
-	uiButtonOnClicked(reset, resetArgs, renderOptions);
-	uiButtonOnClicked(browseBtn, browseBtnClicked, renderOptions);
-	uiButtonOnClicked(renderBtn, renderBtnClicked, renderOptions);
+	uiComboboxOnSelected(containersBox, containerChanged, NULL);
+	uiComboboxOnSelected(codecs, codecChanged, NULL);
+	uiButtonOnClicked(reset, resetArgs, NULL);
+	uiButtonOnClicked(browseBtn, browseBtnClicked, NULL);
+	uiButtonOnClicked(renderBtn, renderBtnClicked, NULL);
 
 	return uiControl(mainVerticalBox);
 }
 
 static void browseBtnClicked(uiButton *b, void *args) {
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	char *chatFile = uiOpenFile(mainwin, NULL, "JSON File (*.json)|*.json");
 	uiEntrySetText(renderOptions->filePath, chatFile ? chatFile : "");
 	uiFreeText(chatFile);
 }
 
 static void renderBtnClicked(uiButton *b, void *args) {
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
 	char *videoFile = uiSaveFile(mainwin, NULL, containers[selectedContainer].defaultName, containers[selectedContainer].filter);
 	char *chatFile = uiEntryText(renderOptions->filePath);
@@ -297,7 +298,6 @@ static void renderBtnClicked(uiButton *b, void *args) {
 }
 
 static void *renderTask(void *args) {
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	char buf[200];
 	FILE *fp;
 
@@ -308,7 +308,6 @@ static void *renderTask(void *args) {
 
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
-		logData->renderOptions = renderOptions;
 		if (strstr(buf, "STATUS")) {
 			int statusOffset = strlen("[STATUS] - ");
 			buf[strlen(buf) - 1] = '\0';
@@ -328,7 +327,7 @@ static void *renderTask(void *args) {
 	}
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = FINISH, .i = pclose(fp), .renderOptions = renderOptions};
+	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(renderOptions->cmd->memory);
@@ -340,7 +339,6 @@ static void *renderTask(void *args) {
 static void codecChanged(uiCombobox *c, void *args) {
 	if (uiComboboxSelected(c) == -1)
 		return;
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
 	int seleectedCodec = uiComboboxSelected(renderOptions->codecs);
 	uiEntrySetText(renderOptions->inputArgs, containers[selectedContainer].supportedCodecs[seleectedCodec].inputArgs);
@@ -348,7 +346,6 @@ static void codecChanged(uiCombobox *c, void *args) {
 }
 
 static void containerChanged(uiCombobox *c, void *args) {
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	uiCombobox *codecs = renderOptions->codecs;
 	int selectedContainer = uiComboboxSelected(c);
 	uiComboboxClear(codecs);
@@ -360,7 +357,6 @@ static void containerChanged(uiCombobox *c, void *args) {
 }
 
 static void resetArgs(uiButton *b, void *args) {
-	ChatRenderOptions *renderOptions = (ChatRenderOptions *)args;
 	int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
 	int seleectedCodec = uiComboboxSelected(renderOptions->codecs);
 	uiEntrySetText(renderOptions->inputArgs, containers[selectedContainer].supportedCodecs[seleectedCodec].inputArgs);
@@ -369,7 +365,6 @@ static void resetArgs(uiButton *b, void *args) {
 
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
-	ChatRenderOptions *renderOptions = data->renderOptions;
 	switch (data->flag) {
 		case STATUS:
 			uiControlDisable(uiControl(renderOptions->renderBtn));
@@ -402,3 +397,72 @@ static void runOnUiThread(void *args) {
 	}
 	free(data);
 }
+
+static const container containers[4] = {{"MP4",
+																				 "chat.mp4",
+																				 "mp4 File (*.mp4)|*.mp4",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""}}},
+																				{"MOV",
+																				 "chat.mov",
+																				 "mov file (*.mov)|*.mov",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""},
+																					{"ProRes",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v prores_ks -qscale:v 62 -pix_fmt argb \"{save_path}\""},
+																					{"RLE",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v qtrle -pix_fmt argb \"{save_path}\""}}},
+																				{"WEBM",
+																				 "chat.webm",
+																				 "webm File (*.webm)|*.webm",
+																				 {{"VP8",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 "
+																					 "\"{save_path}\""},
+																					{"VP9",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}},
+																				{"MKV",
+																				 "chat.mkv",
+																				 "mkv File (*.mkv)|*.mkv",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p "
+																					 "\"{save_path}\""},
+																					{"VP8",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 "
+																					 "\"{save_path}\""},
+																					{"VP9",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize "
+																					 "{max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
+																					 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}}};

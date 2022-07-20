@@ -1,6 +1,4 @@
 #include "utils.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "../libs/stb_image.h"
 
 typedef struct {
 	uiEntry *linkEntry;
@@ -34,13 +32,5 @@ typedef struct {
 	struct handler *handler;
 } VodOptions;
 
-typedef enum { PREPARE, DOWNLOADING, COMBINING, FINALIZING, PROGRESS, LOGGING, FINISH } Flags;
-
-typedef struct {
-	VodOptions *vodOptions;
-	int i;
-	char *buf;
-	Flags flag;
-} uiData;
-
 uiControl *VodDownloaderDrawUi(void);
+void VodDownloaderResetUi(void);

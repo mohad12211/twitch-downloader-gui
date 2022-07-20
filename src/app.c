@@ -18,12 +18,11 @@ static void saveConfig(void) {
 static void loadConfig(void) {
 	char *buffer = NULL;
 	size_t len;
-	ssize_t bytes_read;
 	FILE *fp = fopen(configFile, "r");
 	if (fp == NULL) {
 		configJson = cJSON_CreateObject();
 	} else {
-		bytes_read = getdelim(&buffer, &len, '\0', fp);
+		getdelim(&buffer, &len, '\0', fp);
 		// TODO: handle erros
 		configJson = cJSON_Parse(buffer);
 		fclose(fp);
@@ -32,12 +31,18 @@ static void loadConfig(void) {
 }
 
 static int onClosing(uiWindow *w, void *data) {
+	ChatDownloaderResetUi();
+	ClipDownloaderResetUi();
+	VodDownloaderResetUi();
 	uiQuit();
 	saveConfig();
 	return 1;
 }
 
 static int onShouldQuit(void *data) {
+	ChatDownloaderResetUi();
+	ClipDownloaderResetUi();
+	VodDownloaderResetUi();
 	uiControlDestroy(uiControl(data));
 	saveConfig();
 	return 1;

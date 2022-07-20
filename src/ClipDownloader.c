@@ -1,13 +1,13 @@
 #include "ClipDownloader.h"
 
 char qualityArray[5][8];
+static ClipOptions *clipOptions;
 
 static void infoBtnClicked(uiButton *b, void *data);
 static void downloadBtnClicked(uiButton *b, void *data);
 static int setQualities(char *id, uiCombobox *cBox);
-static void setInfo(char *id, ClipOptions *clipOptions);
+static void setInfo(char *id);
 static void *downloadTask(void *arg);
-static void clearFreeUI(ClipOptions *clipOptions);
 static char *getId(char *link);
 static void runOnUiThread(void *args);
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e);
@@ -15,7 +15,7 @@ static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left);
 static void handlerDragBroken(uiAreaHandler *ah, uiArea *area);
 static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e);
 static void handlerDraw(uiAreaHandler *ah, uiArea *area, uiAreaDrawParams *p);
-static void setThumbnail(char *link, ClipOptions *clipOptions);
+static void setThumbnail(char *link);
 
 uiControl *ClipDownloaderDrawUi(void) {
 	uiBox *mainVerticalBox = uiNewVerticalBox();
@@ -113,20 +113,19 @@ uiControl *ClipDownloaderDrawUi(void) {
 	uiBoxAppend(pBarBox, uiControl(pBar), 1);
 	uiBoxAppend(mainVerticalBox, uiControl(pBarBox), 0);
 
-	ClipOptions *clipOptions = malloc(sizeof(ClipOptions));
+	clipOptions = malloc(sizeof(ClipOptions));
 	*clipOptions = (ClipOptions){
 			qualities, linkEntry, nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar, status, downloadBtn, infoBtn, NULL, NULL, imageArea, handler,
 	};
 
-	uiButtonOnClicked(infoBtn, infoBtnClicked, clipOptions);
-	uiButtonOnClicked(downloadBtn, downloadBtnClicked, clipOptions);
+	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
+	uiButtonOnClicked(downloadBtn, downloadBtnClicked, NULL);
 
 	return uiControl(mainVerticalBox);
 }
 
 static void infoBtnClicked(uiButton *b, void *data) {
-	ClipOptions *clipOptions = (ClipOptions *)data;
-	clearFreeUI(clipOptions);
+	ClipDownloaderResetUi();
 	char *link = uiEntryText(clipOptions->linkEntry);
 	char *id = getId(link);
 	if (id == NULL) {
@@ -139,7 +138,7 @@ static void infoBtnClicked(uiButton *b, void *data) {
 		free(id);
 		goto err;
 	}
-	setInfo(id, clipOptions);
+	setInfo(id);
 	clipOptions->id = id;
 	uiControlEnable(uiControl(clipOptions->downloadBtn));
 err:
@@ -152,7 +151,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 		return;
 	}
 
-	ClipOptions *clipOptions = (ClipOptions *)data;
 	string *cmd = malloc(sizeof(string));
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 	concat(cmd, 3, getBinaryPath(), " -m ClipDownload -u ", clipOptions->id);
@@ -170,7 +168,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 }
 
 static void *downloadTask(void *args) {
-	ClipOptions *clipOptions = (ClipOptions *)args;
 	char buf[200];
 	FILE *fp;
 
@@ -180,17 +177,17 @@ static void *downloadTask(void *args) {
 	}
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.clipOptions = clipOptions, .flag = DOWNLOADING};
+	*data = (uiData){.flag = DOWNLOADING};
 	uiQueueMain(runOnUiThread, data);
 
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
-		*logData = (uiData){.buf = strdup(buf), .clipOptions = clipOptions, .flag = LOGGING};
+		*logData = (uiData){.buf = strdup(buf), .flag = LOGGING};
 		uiQueueMain(runOnUiThread, logData);
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.clipOptions = clipOptions, .flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(clipOptions->cmd->memory);
@@ -232,7 +229,7 @@ err:
 	return validID;
 }
 
-static void setInfo(char *id, ClipOptions *clipOptions) {
+static void setInfo(char *id) {
 	string *infoRes = getClipInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
 	char duration[11];
@@ -244,7 +241,7 @@ static void setInfo(char *id, ClipOptions *clipOptions) {
 	uiLabelSetText(clipOptions->createdLabel, createdLocalTime);
 	cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
 	if (thumbnail)
-		setThumbnail(thumbnail->valuestring, clipOptions);
+		setThumbnail(thumbnail->valuestring);
 
 	free(infoRes->memory);
 	free(infoRes);
@@ -255,7 +252,7 @@ static void setInfo(char *id, ClipOptions *clipOptions) {
 // https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
 // stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian, so little-endian, so it will be BGRA
 // so I have to swap the B and the R, the image is 480x272 so should be fast.
-static void setThumbnail(char *link, ClipOptions *clipOptions) {
+static void setThumbnail(char *link) {
 	int x, y, n;
 	string *response = requestImage(link);
 	clipOptions->handler->binaryData = stbi_load_from_memory(response->memory, response->used, &x, &y, &n, 4);
@@ -300,7 +297,6 @@ static char *getId(char *link) {
 
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
-	ClipOptions *clipOptions = data->clipOptions;
 	switch (data->flag) {
 		case DOWNLOADING:
 			uiControlDisable(uiControl(clipOptions->downloadBtn));
@@ -332,7 +328,7 @@ static void runOnUiThread(void *args) {
 	free(data);
 }
 
-static void clearFreeUI(ClipOptions *clipOptions) {
+void ClipDownloaderResetUi(void) {
 	free(clipOptions->id);
 	clipOptions->id = NULL;
 	stbi_image_free(clipOptions->handler->binaryData);
