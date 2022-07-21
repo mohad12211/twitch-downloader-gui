@@ -14,6 +14,7 @@
 
 #include "../libs/ui.h"
 #include "../libs/cJSON.h"
+#include "../libs/cJSON_Utils.h"
 #include "../libs/stb_image.h"
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))

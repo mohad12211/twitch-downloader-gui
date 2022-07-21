@@ -204,8 +204,8 @@ static int setQualities(char *id, uiCombobox *cBox) {
 	string *qualityRes = getClipQualities(id);
 	uiComboboxClear(cBox);
 	root = cJSON_Parse((char *)qualityRes->memory);
-	qualities = getJson(getJson(getJson(cJSON_GetArrayItem(root, 0), "data"), "clip"), "videoQualities");
-	if (qualities == NULL) {
+	qualities = cJSONUtils_GetPointer(root, "/0/data/clip/videoQualities");
+	if (cJSON_IsNull(qualities)) {
 		validID = 0;
 		goto err;
 	}
@@ -233,13 +233,13 @@ static void setInfo(char *id) {
 	string *infoRes = getClipInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
 	char duration[11];
-	uiLabelSetText(clipOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
-	uiLabelSetText(clipOptions->titleLabel, getJson(getJson(getJson(root, "data"), "clip"), "title")->valuestring);
-	sprintf(duration, "%d %s", (getJson(getJson(getJson(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
+	uiLabelSetText(clipOptions->nameLabel, cJSONUtils_GetPointer(root, "/data/clip/broadcaster/displayName")->valuestring);
+	uiLabelSetText(clipOptions->titleLabel, cJSONUtils_GetPointer(root, "/data/clip/title")->valuestring);
+	sprintf(duration, "%d %s", cJSONUtils_GetPointer(root, "/data/clip/durationSeconds")->valueint, "Seconds");
 	uiLabelSetText(clipOptions->durationLabel, duration);
-	char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "clip"), "createdAt")->valuestring);
+	char *createdLocalTime = getLocalTime(cJSONUtils_GetPointer(root, "/data/clip/createdAt")->valuestring);
 	uiLabelSetText(clipOptions->createdLabel, createdLocalTime);
-	cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
+	cJSON *thumbnail = cJSONUtils_GetPointer(root, "/data/clip/thumbnailURL");
 	if (thumbnail)
 		setThumbnail(thumbnail->valuestring);
 

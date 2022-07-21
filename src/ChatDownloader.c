@@ -314,20 +314,20 @@ static int setVodInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getVodInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
-	if (cJSON_IsNull(getJson(getJson(root, "data"), "video"))) {
+	if (cJSON_IsNull(cJSONUtils_GetPointer(root, "/data/video"))) {
 		validID = 0;
 		goto err;
 	}
 	char duration[11];
-	uiLabelSetText(chatOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "video"), "owner"), "displayName")->valuestring);
-	uiLabelSetText(chatOptions->titleLabel, getJson(getJson(getJson(root, "data"), "video"), "title")->valuestring);
-	int seconds = (getJson(getJson(getJson(root, "data"), "video"), "lengthSeconds")->valueint);
+	uiLabelSetText(chatOptions->nameLabel, cJSONUtils_GetPointer(root, "/data/video/owner/displayName")->valuestring);
+	uiLabelSetText(chatOptions->titleLabel, cJSONUtils_GetPointer(root, "/data/video/title")->valuestring);
+	int seconds = cJSONUtils_GetPointer(root, "/data/video/lengthSeconds")->valueint;
 	sprintf(duration, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 	uiLabelSetText(chatOptions->durationLabel, duration);
-	char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "video"), "createdAt")->valuestring);
+	char *createdLocalTime = getLocalTime(cJSONUtils_GetPointer(root, "/data/video/createdAt")->valuestring);
 	uiLabelSetText(chatOptions->createdLabel, createdLocalTime);
 	free(createdLocalTime);
-	cJSON *thumbnail = cJSON_GetArrayItem(getJson(getJson(getJson(root, "data"), "video"), "thumbnailURLs"), 0);
+	cJSON *thumbnail = cJSONUtils_GetPointer(root, "/data/video/thumbnailURLs/0");
 	if (thumbnail)
 		setThumbnail(thumbnail->valuestring);
 
@@ -342,23 +342,22 @@ static int setClipInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getClipInfo(id);
 	cJSON *root = cJSON_Parse((char *)infoRes->memory);
-	if (cJSON_IsNull(getJson(getJson(root, "data"), "clip"))) {
+	if (cJSON_IsNull(cJSONUtils_GetPointer(root, "/data/clip"))) {
 		validID = 0;
 		goto err;
-	} else if (cJSON_IsNull(getJson(getJson(getJson(root, "data"), "clip"), "video")) ||
-						 cJSON_IsNull(getJson(getJson(getJson(root, "data"), "clip"), "videoOffsetSeconds"))) {
+	} else if (cJSON_IsNull(cJSONUtils_GetPointer(root, "/data/clip/video")) || cJSON_IsNull(cJSONUtils_GetPointer(root, "/data/clip/videoOffsetSeconds"))) {
 		validID = 0;
 		goto err;
 	}
 	char duration[11];
-	uiLabelSetText(chatOptions->nameLabel, getJson(getJson(getJson(getJson(root, "data"), "clip"), "broadcaster"), "displayName")->valuestring);
-	uiLabelSetText(chatOptions->titleLabel, getJson(getJson(getJson(root, "data"), "clip"), "title")->valuestring);
-	sprintf(duration, "%d %s", (getJson(getJson(getJson(root, "data"), "clip"), "durationSeconds")->valueint), "Seconds");
+	uiLabelSetText(chatOptions->nameLabel, cJSONUtils_GetPointer(root, "/data/clip/broadcaster/displayName")->valuestring);
+	uiLabelSetText(chatOptions->titleLabel, cJSONUtils_GetPointer(root, "/data/clip/title")->valuestring);
+	sprintf(duration, "%d %s", cJSONUtils_GetPointer(root, "/data/clip/durationSeconds")->valueint, "Seconds");
 	uiLabelSetText(chatOptions->durationLabel, duration);
-	char *createdLocalTime = getLocalTime(getJson(getJson(getJson(root, "data"), "clip"), "createdAt")->valuestring);
+	char *createdLocalTime = getLocalTime(cJSONUtils_GetPointer(root, "/data/clip/createdAt")->valuestring);
 	uiLabelSetText(chatOptions->createdLabel, createdLocalTime);
 	free(createdLocalTime);
-	cJSON *thumbnail = getJson(getJson(getJson(root, "data"), "clip"), "thumbnailURL");
+	cJSON *thumbnail = cJSONUtils_GetPointer(root, "/data/clip/thumbnailURL");
 	if (thumbnail)
 		setThumbnail(thumbnail->valuestring);
 
