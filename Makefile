@@ -14,7 +14,8 @@ BIN=$(BINDIR)/twitch-downloader-gui
 CFLAGS=-std=c99 -Wpedantic -Wextra -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter -Wno-cast-qual -O2
 DEPFLAGS=-MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 LDFLAGS=libs/libui.a `pkg-config --cflags --libs gtk+-3.0` -ldl -lm -pthread -lcurl
-.PHONY: all clean run install
+PREFIX=/usr
+.PHONY: all clean run install uninstall
 
 all: $(BIN) 
 
@@ -41,11 +42,18 @@ run:
 	$(BIN)
 
 install:
-	install -Dm 0755 build/bin/twitch-downloader-gui $(DESTDIR)/usr/bin/twitch-downloader-gui
+	install -Dm 0755 build/bin/twitch-downloader-gui $(DESTDIR)$(PREFIX)/bin/twitch-downloader-gui
 	for _size in 128 16 22 24 256 32 48 512 64 96 ; do \
-		install -Dm 644 data/icons/$${_size}x$${_size}/twitch-downloader-gui.png $(DESTDIR)/usr/share/icons/hicolor/$${_size}x$${_size}/apps/twitch-downloader-gui.png; \
+		install -Dm 644 data/icons/$${_size}x$${_size}/twitch-downloader-gui.png $(DESTDIR)$(PREFIX)/share/icons/hicolor/$${_size}x$${_size}/apps/twitch-downloader-gui.png; \
 	done
-	install -Dm 644 data/applications/twitch-downloader-gui.desktop $(DESTDIR)/usr/share/applications/twitch-downloader-gui.desktop
+	install -Dm 644 data/applications/twitch-downloader-gui.desktop $(DESTDIR)$(PREFIX)/share/applications/twitch-downloader-gui.desktop
+
+uninstall:
+	rp $(DESTDIR)$(PREFIX)/bin/twitch-downloader-gui
+	for _size in 128 16 22 24 256 32 48 512 64 96 ; do \
+		rm $(DESTDIR)$(PREFIX)/share/icons/hicolor/$${_size}x$${_size}/apps/twitch-downloader-gui.png; \
+	done
+	rm $(DESTDIR)$(PREFIX)/share/applications/twitch-downloader-gui.desktop
 
 $(DEPS):
 
