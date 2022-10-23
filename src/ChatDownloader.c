@@ -263,7 +263,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
 	concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder")->valuestring);
 
-	concat(cmd, 3, " -o ", fileName, " 2>&1");
+	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
 	chatOptions->cmd = cmd;
 
 	uiFreeText(fileName);
