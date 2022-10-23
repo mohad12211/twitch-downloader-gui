@@ -41,25 +41,25 @@ string *requestImage(char *link) {
 }
 
 string *getClipQualities(const char *id) {
-	char *base =
-			"[{\"operationName\":\"VideoAccessToken_Clip\",\"variables\":{\"slug\":\"%s\"},\"extensions\":{\"persistedQuery\":{"
-			"\"version\":1,\"sha256Hash\":\"36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11\"}}}]";
-	char req[strlen(base) + strlen(id) - 1];	// '%s' counts as 2 more chars, we only need 1 more for null char
+	char *base = "[{\"operationName\":\"VideoAccessToken_Clip\",\"variables\":{\"slug\":\"%s\"},\"extensions\":{\"persistedQuery\":{"
+							 "\"version\":1,\"sha256Hash\":\"36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11\"}}}]";
+	char req[strlen(base) + strlen(id) - 1]; // '%s' counts as 2 more chars, we only need 1 more for null char
 	sprintf(req, base, id);
 	return performRequest(req);
 }
 
 string *getClipInfo(const char *id) {
-	char *base =
-			"{\"query\":\"query{clip(slug:\\\"%s\\\"){title,durationSeconds,createdAt,broadcaster{displayName},thumbnailURL(width:480,height:272),videoOffsetSeconds,video{id}}"
-			"}\",\"variables\":{}}";
+	char *base = "{\"query\":\"query{clip(slug:\\\"%s\\\"){title,durationSeconds,createdAt,broadcaster{displayName},thumbnailURL(width:480,height:272),"
+							 "videoOffsetSeconds,video{id}}"
+							 "}\",\"variables\":{}}";
 	char req[strlen(base) + strlen(id) - 1];
 	sprintf(req, base, id);
 	return performRequest(req);
 }
 
 string *getVodInfo(const char *id) {
-	char *base = "{\"query\":\"query{video(id:\\\"%s\\\"){title,lengthSeconds,createdAt,owner{displayName},thumbnailURLs(height:180,width:320)}}\",\"variables\":{}}";
+	char *base =
+			"{\"query\":\"query{video(id:\\\"%s\\\"){title,lengthSeconds,createdAt,owner{displayName},thumbnailURLs(height:180,width:320)}}\",\"variables\":{}}";
 	char req[strlen(base) + strlen(id) - 1];
 	sprintf(req, base, id);
 	return performRequest(req);
@@ -125,9 +125,7 @@ void concat(string *str, int count, ...) {
 	va_end(ap);
 }
 
-cJSON *getJson(cJSON *obj, char *name) {
-	return cJSON_GetObjectItem(obj, name);
-}
+cJSON *getJson(cJSON *obj, char *name) { return cJSON_GetObjectItem(obj, name); }
 
 void setJson(cJSON *obj, char *name, cJSON *item) {
 	if (getJson(obj, name) == NULL) {

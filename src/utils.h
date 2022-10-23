@@ -1,21 +1,21 @@
 #ifndef UTILS_H
 #define UTILS_H
 #define _GNU_SOURCE
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <curl/curl.h>
-#include <regex.h>
-#include <string.h>
 #include <math.h>
 #include <pthread.h>
+#include <regex.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
-#include "../libs/ui.h"
 #include "../libs/cJSON.h"
 #include "../libs/cJSON_Utils.h"
 #include "../libs/stb_image.h"
+#include "../libs/ui.h"
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define DEFAULT_PATH "/usr/share/twitch-downloader-gui/TwitchDownloaderCLI"
@@ -36,7 +36,7 @@ typedef struct {
 	unsigned char *memory;
 	size_t used;
 	size_t size;
-} string;	 // TODO: maybe change this name?
+} string; // TODO: maybe change this name?
 
 typedef struct {
 	int i;

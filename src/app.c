@@ -73,9 +73,7 @@ static void initDefaults(void) {
 	}
 }
 
-static void preferencesClicked(uiMenuItem *i, uiWindow *win, void *data) {
-	ShowPreferences();
-}
+static void preferencesClicked(uiMenuItem *i, uiWindow *win, void *data) { ShowPreferences(); }
 
 int main(int argc, char const *argv[]) {
 	uiInitOptions options;
@@ -111,6 +109,7 @@ int main(int argc, char const *argv[]) {
 	uiBoxSetPadded(mainVerticalBox, 1);
 	uiWindowSetChild(mainwin, uiControl(mainVerticalBox));
 
+	// TODO: probably remove this
 	uiLabel *update = uiNewLabel("New <a href=\"https://github.com/mohad12211/TwitchDownloader-gui/releases\">Update</a> is available.");
 	uiBoxAppend(mainVerticalBox, uiControl(update), 0);
 	uiControlHide(uiControl(update));
