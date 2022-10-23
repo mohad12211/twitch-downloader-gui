@@ -166,7 +166,7 @@ uiControl *ChatRenderDrawUi(void) {
 
 	uiForm *logForm = uiNewForm();
 	uiFormSetPadded(logForm, 1);
-	uiMultilineEntry *logsEntry = uiNewMultilineEntry();
+	uiMultilineEntry *logsEntry = uiNewNonWrappingMultilineEntry();
 	uiMultilineEntrySetReadOnly(logsEntry, 1);
 	uiFormAppend(logForm, "Logs: ", uiControl(logsEntry), 1);
 	uiBoxAppend(middleHorizontalBox, uiControl(logForm), 1);
@@ -366,34 +366,34 @@ static void resetArgs(uiButton *b, void *args) {
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
 	switch (data->flag) {
-		case STATUS:
-			uiControlDisable(uiControl(renderOptions->renderBtn));
-			uiControlDisable(uiControl(renderOptions->browseBtn));
-			uiLabelSetText(renderOptions->status, data->buf);
-			uiProgressBarSetValue(renderOptions->pBar, data->i);
-			free(data->buf);
-			break;
-		case LOGGING:
-			uiMultilineEntryAppend(renderOptions->logsEntry, data->buf);
-			if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
-				uiMultilineEntryAppend(renderOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
-			}
-			free(data->buf);
-			break;
-		case FINISH:
-			if (data->i) {
-				uiLabelSetText(renderOptions->status, "Error...");
-				uiProgressBarSetValue(renderOptions->pBar, 0);
-			} else {
-				uiLabelSetText(renderOptions->status, "Done!");
-				uiProgressBarSetValue(renderOptions->pBar, 100);
-			}
-			uiControlEnable(uiControl(renderOptions->renderBtn));
-			uiControlEnable(uiControl(renderOptions->browseBtn));
-			break;
+	case STATUS:
+		uiControlDisable(uiControl(renderOptions->renderBtn));
+		uiControlDisable(uiControl(renderOptions->browseBtn));
+		uiLabelSetText(renderOptions->status, data->buf);
+		uiProgressBarSetValue(renderOptions->pBar, data->i);
+		free(data->buf);
+		break;
+	case LOGGING:
+		uiMultilineEntryAppend(renderOptions->logsEntry, data->buf);
+		if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+			uiMultilineEntryAppend(renderOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+		}
+		free(data->buf);
+		break;
+	case FINISH:
+		if (data->i) {
+			uiLabelSetText(renderOptions->status, "Error...");
+			uiProgressBarSetValue(renderOptions->pBar, 0);
+		} else {
+			uiLabelSetText(renderOptions->status, "Done!");
+			uiProgressBarSetValue(renderOptions->pBar, 100);
+		}
+		uiControlEnable(uiControl(renderOptions->renderBtn));
+		uiControlEnable(uiControl(renderOptions->browseBtn));
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 	free(data);
 }

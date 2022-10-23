@@ -10,8 +10,7 @@ static void *downloadTask(void *args);
 static int setClipInfo(char *id);
 static int setVodInfo(char *i);
 static int getId(char *link, char **id);
-static void cropStartToggle(uiCheckbox *c, void *data);
-static void cropEndToggle(uiCheckbox *c, void *data);
+static void cropToggle(uiCheckbox *c, void *data);
 static void runOnUiThread(void *args);
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e);
 static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left);
@@ -95,23 +94,25 @@ uiControl *ChatDownloaderDrawUi(void) {
 	uiRadioButtons *downloadFormats = uiNewRadioButtons(GTK_ORIENTATION_HORIZONTAL);
 	uiRadioButtonsAppend(downloadFormats, "Advanced JSON");
 	uiRadioButtonsAppend(downloadFormats, "Simple Text");
-	uiFormAppend(formatForm, "Download Formats", uiControl(downloadFormats), 0);
+	uiRadioButtonsSetSelected(downloadFormats, 0);
+	uiFormAppend(formatForm, "Download Formats: ", uiControl(downloadFormats), 0);
 	uiRadioButtons *timeFormats = uiNewRadioButtons(GTK_ORIENTATION_HORIZONTAL);
 	uiControlHide(uiControl(timeFormats));
 	uiRadioButtonsAppend(timeFormats, "UTC");
 	uiRadioButtonsAppend(timeFormats, "Relative");
 	uiRadioButtonsAppend(timeFormats, "None");
-	uiFormAppend(formatForm, "Timestamp Format", uiControl(timeFormats), 0);
+	uiRadioButtonsSetSelected(timeFormats, 0);
+	uiFormAppend(formatForm, "Timestamp Format: ", uiControl(timeFormats), 0);
 	uiRadioButtonsOnSelected(downloadFormats, downloadFormatSelect, timeFormats);
 
 	// TODO: rename these boxes
-	uiBox *startSpinsBox = uiNewHorizontalBox();	// box that continas the 3 spinBoxes
+	uiBox *startSpinsBox = uiNewHorizontalBox(); // box that continas the 3 spinBoxes
 	uiBoxSetPadded(startSpinsBox, 0);
 	uiControlDisable(uiControl(startSpinsBox));
-	uiBox *cropStartBox = uiNewHorizontalBox();	 // box that continas the checkbox and startSpinBox
+	uiBox *cropStartBox = uiNewHorizontalBox(); // box that continas the checkbox and startSpinBox
 	uiControlDisable(uiControl(cropStartBox));
 	uiCheckbox *cropStartCheck = uiNewCheckbox("Crop Start :");
-	uiCheckboxOnToggled(cropStartCheck, cropStartToggle, startSpinsBox);
+	uiCheckboxOnToggled(cropStartCheck, cropToggle, startSpinsBox);
 	uiSpinbox *startHour = uiNewSpinbox(0, 100);
 	uiSpinbox *startMin = uiNewSpinbox(0, 59);
 	uiSpinbox *startSec = uiNewSpinbox(0, 59);
@@ -128,7 +129,7 @@ uiControl *ChatDownloaderDrawUi(void) {
 	uiBox *cropEndBox = uiNewHorizontalBox();
 	uiControlDisable(uiControl(cropEndBox));
 	uiCheckbox *cropEndCheck = uiNewCheckbox("Crop End :  ");
-	uiCheckboxOnToggled(cropEndCheck, cropEndToggle, endSpinsBox);
+	uiCheckboxOnToggled(cropEndCheck, cropToggle, endSpinsBox);
 	uiSpinbox *endHour = uiNewSpinbox(0, 100);
 	uiSpinbox *endMin = uiNewSpinbox(0, 59);
 	uiSpinbox *endSec = uiNewSpinbox(0, 59);
@@ -195,33 +196,33 @@ static void infoBtnCallBack(uiButton *b, void *data) {
 	int validClipID;
 	int validVodID;
 	switch (idType) {
-		case 0:
-			uiMsgBoxError(mainwin, "Error", "Invalid Url");
-			break;
-		case 1:
-			validClipID = setClipInfo(id);
-			if (validClipID) {
-				chatOptions->id = id;
-				uiControlEnable(uiControl(chatOptions->downloadBtn));
-			} else {
-				uiMsgBoxError(mainwin, "Error", "Invalid Clip ID, or deleted/expired Vod");
-				free(id);
-			}
-			break;
-		case 2:
-			validVodID = setVodInfo(id);
-			if (validVodID) {
-				uiControlEnable(uiControl(chatOptions->cropStartBox));
-				uiControlEnable(uiControl(chatOptions->cropEndBox));
-				uiControlEnable(uiControl(chatOptions->downloadBtn));
-				chatOptions->id = id;
-			} else {
-				uiMsgBoxError(mainwin, "Error", "Invalid Vod ID");
-				free(id);
-			}
-			break;
-		default:
-			break;
+	case 0:
+		uiMsgBoxError(mainwin, "Error", "Invalid Url");
+		break;
+	case 1:
+		validClipID = setClipInfo(id);
+		if (validClipID) {
+			chatOptions->id = id;
+			uiControlEnable(uiControl(chatOptions->downloadBtn));
+		} else {
+			uiMsgBoxError(mainwin, "Error", "Invalid Clip ID, or deleted/expired Vod");
+			free(id);
+		}
+		break;
+	case 2:
+		validVodID = setVodInfo(id);
+		if (validVodID) {
+			uiControlEnable(uiControl(chatOptions->cropStartBox));
+			uiControlEnable(uiControl(chatOptions->cropEndBox));
+			uiControlEnable(uiControl(chatOptions->downloadBtn));
+			chatOptions->id = id;
+		} else {
+			uiMsgBoxError(mainwin, "Error", "Invalid Vod ID");
+			free(id);
+		}
+		break;
+	default:
+		break;
 	}
 	uiFreeText(link);
 }
@@ -369,8 +370,9 @@ err:
 }
 
 // https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
-// stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian, so little-endian, so it will be BGRA
-// so I have to swap the B and the R, the image is 480x272 so should be fast.
+// stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian,
+// so little-endian, so it will be BGRA so I have to swap the B and the R, the
+// image is 480x272 so should be fast.
 static void setThumbnail(char *link) {
 	int x, y, n;
 	string *response = requestImage(link);
@@ -426,16 +428,7 @@ static void downloadFormatSelect(uiRadioButtons *r, void *data) {
 		uiControlShow(uiControl((uiRadioButtons *)data));
 }
 
-// TODO: maybe merge these two functions? wouldn't make a big difference tho
-static void cropStartToggle(uiCheckbox *c, void *data) {
-	uiBox *box = (uiBox *)data;
-	if (uiCheckboxChecked(c)) {
-		uiControlEnable(uiControl(box));
-	} else {
-		uiControlDisable(uiControl(box));
-	}
-}
-static void cropEndToggle(uiCheckbox *c, void *data) {
+static void cropToggle(uiCheckbox *c, void *data) {
 	uiBox *box = (uiBox *)data;
 	if (uiCheckboxChecked(c)) {
 		uiControlEnable(uiControl(box));
@@ -447,39 +440,39 @@ static void cropEndToggle(uiCheckbox *c, void *data) {
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
 	switch (data->flag) {
-		case DOWNLOADING:
-			uiControlDisable(uiControl(chatOptions->downloadBtn));
-			uiControlDisable(uiControl(chatOptions->infoBtn));
-			uiLabelSetText(chatOptions->status, "Downloading...");
+	case DOWNLOADING:
+		uiControlDisable(uiControl(chatOptions->downloadBtn));
+		uiControlDisable(uiControl(chatOptions->infoBtn));
+		uiLabelSetText(chatOptions->status, "Downloading...");
+		uiProgressBarSetValue(chatOptions->pBar, 0);
+		break;
+	case PROGRESS:
+		uiProgressBarSetValue(chatOptions->pBar, MIN(data->i, 100));
+		if (data->i == -1)
+			uiLabelSetText(chatOptions->status, "Embedding Emotes...");
+		break;
+	case LOGGING:
+		uiMultilineEntryAppend(chatOptions->logsEntry, data->buf);
+		if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+			uiMultilineEntryAppend(chatOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+		}
+		free(data->buf);
+		break;
+	case FINISH:
+		if (data->i) {
+			uiLabelSetText(chatOptions->status, "Error...");
 			uiProgressBarSetValue(chatOptions->pBar, 0);
-			break;
-		case PROGRESS:
-			uiProgressBarSetValue(chatOptions->pBar, MIN(data->i, 100));
-			if (data->i == -1)
-				uiLabelSetText(chatOptions->status, "Embedding Emotes...");
-			break;
-		case LOGGING:
-			uiMultilineEntryAppend(chatOptions->logsEntry, data->buf);
-			if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
-				uiMultilineEntryAppend(chatOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
-			}
-			free(data->buf);
-			break;
-		case FINISH:
-			if (data->i) {
-				uiLabelSetText(chatOptions->status, "Error...");
-				uiProgressBarSetValue(chatOptions->pBar, 0);
-			} else {
-				uiLabelSetText(chatOptions->status, "Done!");
-				uiProgressBarSetValue(chatOptions->pBar, 100);
-			}
-			uiControlEnable(uiControl(chatOptions->downloadBtn));
-			uiControlEnable(uiControl(chatOptions->infoBtn));
-			break;
+		} else {
+			uiLabelSetText(chatOptions->status, "Done!");
+			uiProgressBarSetValue(chatOptions->pBar, 100);
+		}
+		uiControlEnable(uiControl(chatOptions->downloadBtn));
+		uiControlEnable(uiControl(chatOptions->infoBtn));
+		break;
 
-		default:
-			fprintf(stderr, "unknown flag %d", data->flag);
-			break;
+	default:
+		fprintf(stderr, "unknown flag %d", data->flag);
+		break;
 	}
 	free(data);
 }
@@ -511,9 +504,7 @@ void ChatDownloaderResetUi(void) {
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e) {}
 static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left) {}
 static void handlerDragBroken(uiAreaHandler *ah, uiArea *area) {}
-static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) {
-	return 0;
-}
+static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) { return 0; }
 static void handlerDraw(uiAreaHandler *ah, uiArea *area, uiAreaDrawParams *p) {
 	struct handler *handler = (struct handler *)ah;
 	if (!(handler->img))

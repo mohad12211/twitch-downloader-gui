@@ -298,32 +298,32 @@ static char *getId(char *link) {
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
 	switch (data->flag) {
-		case DOWNLOADING:
-			uiControlDisable(uiControl(clipOptions->downloadBtn));
-			uiControlDisable(uiControl(clipOptions->infoBtn));
-			uiLabelSetText(clipOptions->status, "Downloading...");
-			uiProgressBarSetValue(clipOptions->pBar, -1);
-			break;
-		case LOGGING:
-			uiMultilineEntryAppend(clipOptions->logsEntry, data->buf);
-			if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
-				uiMultilineEntryAppend(clipOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
-			}
-			free(data->buf);
-			break;
-		case FINISH:
-			if (data->i) {
-				uiLabelSetText(clipOptions->status, "Error...");
-				uiProgressBarSetValue(clipOptions->pBar, 0);
-			} else {
-				uiLabelSetText(clipOptions->status, "Done!");
-				uiProgressBarSetValue(clipOptions->pBar, 100);
-			}
-			uiControlEnable(uiControl(clipOptions->downloadBtn));
-			uiControlEnable(uiControl(clipOptions->infoBtn));
-			break;
-		default:
-			break;
+	case DOWNLOADING:
+		uiControlDisable(uiControl(clipOptions->downloadBtn));
+		uiControlDisable(uiControl(clipOptions->infoBtn));
+		uiLabelSetText(clipOptions->status, "Downloading...");
+		uiProgressBarSetValue(clipOptions->pBar, -1);
+		break;
+	case LOGGING:
+		uiMultilineEntryAppend(clipOptions->logsEntry, data->buf);
+		if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+			uiMultilineEntryAppend(clipOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+		}
+		free(data->buf);
+		break;
+	case FINISH:
+		if (data->i) {
+			uiLabelSetText(clipOptions->status, "Error...");
+			uiProgressBarSetValue(clipOptions->pBar, 0);
+		} else {
+			uiLabelSetText(clipOptions->status, "Done!");
+			uiProgressBarSetValue(clipOptions->pBar, 100);
+		}
+		uiControlEnable(uiControl(clipOptions->downloadBtn));
+		uiControlEnable(uiControl(clipOptions->infoBtn));
+		break;
+	default:
+		break;
 	}
 	free(data);
 }
@@ -350,9 +350,7 @@ void ClipDownloaderResetUi(void) {
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e) {}
 static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left) {}
 static void handlerDragBroken(uiAreaHandler *ah, uiArea *area) {}
-static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) {
-	return 0;
-}
+static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) { return 0; }
 static void handlerDraw(uiAreaHandler *ah, uiArea *area, uiAreaDrawParams *p) {
 	struct handler *handler = (struct handler *)ah;
 	if (!(handler->img))

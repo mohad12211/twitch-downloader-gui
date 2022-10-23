@@ -4,8 +4,7 @@ static VodOptions *vodOptions;
 
 static void downloadBtnClicked(uiButton *b, void *data);
 static void infoBtnClicked(uiButton *b, void *data);
-static void cropStartToggle(uiCheckbox *c, void *data);
-static void cropEndToggle(uiCheckbox *c, void *data);
+static void cropToggle(uiCheckbox *c, void *data);
 static char *getId(char *link);
 static int setInfo(char *id);
 static void setThumbnail(char *link);
@@ -95,13 +94,13 @@ uiControl *VodDownloaderDrawUi(void) {
 	uiBoxAppend(optionsBox, uiControl(qualityForm), 0);
 
 	// TODO: rename these boxes
-	uiBox *startSpinsBox = uiNewHorizontalBox();	// box that continas the 3 spinsBoxes
+	uiBox *startSpinsBox = uiNewHorizontalBox(); // box that continas the 3 spinsBoxes
 	uiBoxSetPadded(startSpinsBox, 0);
 	uiControlDisable(uiControl(startSpinsBox));
-	uiBox *cropStartBox = uiNewHorizontalBox();	 // box that contains the checkbox and startSpinsbox
+	uiBox *cropStartBox = uiNewHorizontalBox(); // box that contains the checkbox and startSpinsbox
 	uiControlDisable(uiControl(cropStartBox));
 	uiCheckbox *cropStartCheck = uiNewCheckbox("Crop Start :");
-	uiCheckboxOnToggled(cropStartCheck, cropStartToggle, startSpinsBox);
+	uiCheckboxOnToggled(cropStartCheck, cropToggle, startSpinsBox);
 	uiSpinbox *startHour = uiNewSpinbox(0, 100);
 	uiSpinbox *startMin = uiNewSpinbox(0, 59);
 	uiSpinbox *startSec = uiNewSpinbox(0, 59);
@@ -118,7 +117,7 @@ uiControl *VodDownloaderDrawUi(void) {
 	uiBox *cropEndBox = uiNewHorizontalBox();
 	uiControlDisable(uiControl(cropEndBox));
 	uiCheckbox *cropEndCheck = uiNewCheckbox("Crop End :  ");
-	uiCheckboxOnToggled(cropEndCheck, cropEndToggle, endSpinsBox);
+	uiCheckboxOnToggled(cropEndCheck, cropToggle, endSpinsBox);
 	uiSpinbox *endHour = uiNewSpinbox(0, 100);
 	uiSpinbox *endMin = uiNewSpinbox(0, 59);
 	uiSpinbox *endSec = uiNewSpinbox(0, 59);
@@ -310,6 +309,27 @@ static void *downloadTask(void *args) {
 	return NULL;
 }
 
+//  TODO: support receiving ID as input
+static char *getId(char *link) {
+	if (!strstr(link, "twitch.tv/videos/")) {
+		return NULL;
+	}
+
+	CURLU *h = curl_url();
+	CURLUcode uc;
+	char *path = NULL;
+	char *id = NULL;
+
+	uc = curl_url_set(h, CURLUPART_URL, link, 0);
+	uc = curl_url_get(h, CURLUPART_PATH, &path, 0);
+	if (!uc) {
+		id = strdup(strrchr(path, '/') + 1);
+		curl_free(path);
+	}
+	curl_url_cleanup(h);
+	return id;
+}
+
 static int setInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getVodInfo(id);
@@ -326,11 +346,11 @@ static int setInfo(char *id) {
 	uiLabelSetText(vodOptions->durationLabel, duration);
 	char *createdLocalTime = getLocalTime(cJSONUtils_GetPointer(root, "/data/video/createdAt")->valuestring);
 	uiLabelSetText(vodOptions->createdLabel, createdLocalTime);
-	free(createdLocalTime);
 	cJSON *thumbnail = cJSONUtils_GetPointer(root, "/data/video/thumbnailURLs/0");
 	if (thumbnail)
 		setThumbnail(thumbnail->valuestring);
 
+	free(createdLocalTime);
 err:
 	free(infoRes->memory);
 	free(infoRes);
@@ -359,37 +379,7 @@ static void setThumbnail(char *link) {
 	free(response);
 }
 
-//  TODO: support receiving ID as input
-static char *getId(char *link) {
-	if (!strstr(link, "twitch.tv/videos/")) {
-		return NULL;
-	}
-
-	CURLU *h = curl_url();
-	CURLUcode uc;
-	char *path = NULL;
-	char *id = NULL;
-
-	uc = curl_url_set(h, CURLUPART_URL, link, 0);
-	uc = curl_url_get(h, CURLUPART_PATH, &path, 0);
-	if (!uc) {
-		id = strdup(strrchr(path, '/') + 1);
-		curl_free(path);
-	}
-	curl_url_cleanup(h);
-	return id;
-}
-
-// TODO: maybe merge these two functions? wouldn't make a big difference tho
-static void cropStartToggle(uiCheckbox *c, void *data) {
-	uiBox *box = (uiBox *)data;
-	if (uiCheckboxChecked(c)) {
-		uiControlEnable(uiControl(box));
-	} else {
-		uiControlDisable(uiControl(box));
-	}
-}
-static void cropEndToggle(uiCheckbox *c, void *data) {
+static void cropToggle(uiCheckbox *c, void *data) {
 	uiBox *box = (uiBox *)data;
 	if (uiCheckboxChecked(c)) {
 		uiControlEnable(uiControl(box));
@@ -401,47 +391,47 @@ static void cropEndToggle(uiCheckbox *c, void *data) {
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
 	switch (data->flag) {
-		case PREPARE:
-			uiControlDisable(uiControl(vodOptions->downloadBtn));
-			uiControlDisable(uiControl(vodOptions->infoBtn));
-			uiLabelSetText(vodOptions->status, "Preparing...");
-			uiProgressBarSetValue(vodOptions->pBar, -1);
-			break;
+	case PREPARE:
+		uiControlDisable(uiControl(vodOptions->downloadBtn));
+		uiControlDisable(uiControl(vodOptions->infoBtn));
+		uiLabelSetText(vodOptions->status, "Preparing...");
+		uiProgressBarSetValue(vodOptions->pBar, -1);
+		break;
 
-		case DOWNLOADING:
-			uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
-			uiLabelSetText(vodOptions->status, "Downloading...(1/3)");
-			break;
-		case COMBINING:
-			uiProgressBarSetValue(vodOptions->pBar, -1);
-			uiLabelSetText(vodOptions->status, "Combining Parts...(2/3)");
-			break;
-		case FINALIZING:
-			uiLabelSetText(vodOptions->status, "Finazlizing Video...(3/3)");
-			break;
-		case PROGRESS:
-			uiProgressBarSetValue(vodOptions->pBar, (int)(100 * (data->i / vodOptions->duration)));
-			break;
-		case LOGGING:
-			uiMultilineEntryAppend(vodOptions->logsEntry, data->buf);
-			if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
-				uiMultilineEntryAppend(vodOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
-			}
-			free(data->buf);
-			break;
-		case FINISH:
-			if (data->i) {
-				uiLabelSetText(vodOptions->status, "Error...");
-				uiProgressBarSetValue(vodOptions->pBar, 0);
-			} else {
-				uiLabelSetText(vodOptions->status, "Done!");
-				uiProgressBarSetValue(vodOptions->pBar, 100);
-			}
-			uiControlEnable(uiControl(vodOptions->downloadBtn));
-			uiControlEnable(uiControl(vodOptions->infoBtn));
-			break;
-		default:
-			break;
+	case DOWNLOADING:
+		uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
+		uiLabelSetText(vodOptions->status, "Downloading...(1/3)");
+		break;
+	case COMBINING:
+		uiProgressBarSetValue(vodOptions->pBar, -1);
+		uiLabelSetText(vodOptions->status, "Combining Parts...(2/3)");
+		break;
+	case FINALIZING:
+		uiLabelSetText(vodOptions->status, "Finazlizing Video...(3/3)");
+		break;
+	case PROGRESS:
+		uiProgressBarSetValue(vodOptions->pBar, (int)(100 * (data->i / vodOptions->duration)));
+		break;
+	case LOGGING:
+		uiMultilineEntryAppend(vodOptions->logsEntry, data->buf);
+		if (strstr(data->buf, "command not found") && strstr(data->buf, "TwitchDownloaderCLI")) {
+			uiMultilineEntryAppend(vodOptions->logsEntry, "Please specify the TwitchDownloaderCLI path from the options");
+		}
+		free(data->buf);
+		break;
+	case FINISH:
+		if (data->i) {
+			uiLabelSetText(vodOptions->status, "Error...");
+			uiProgressBarSetValue(vodOptions->pBar, 0);
+		} else {
+			uiLabelSetText(vodOptions->status, "Done!");
+			uiProgressBarSetValue(vodOptions->pBar, 100);
+		}
+		uiControlEnable(uiControl(vodOptions->downloadBtn));
+		uiControlEnable(uiControl(vodOptions->infoBtn));
+		break;
+	default:
+		break;
 	}
 	free(data);
 }
@@ -473,9 +463,7 @@ void VodDownloaderResetUi(void) {
 static void handlerMouseEvent(uiAreaHandler *ah, uiArea *area, uiAreaMouseEvent *e) {}
 static void handlerMouseCrossed(uiAreaHandler *ah, uiArea *area, int left) {}
 static void handlerDragBroken(uiAreaHandler *ah, uiArea *area) {}
-static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) {
-	return 0;
-}
+static int handlerKeyEvent(uiAreaHandler *ah, uiArea *area, uiAreaKeyEvent *e) { return 0; }
 static void handlerDraw(uiAreaHandler *ah, uiArea *area, uiAreaDrawParams *p) {
 	struct handler *handler = (struct handler *)ah;
 	if (!(handler->img))
