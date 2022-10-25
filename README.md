@@ -10,7 +10,7 @@ The library is still in mid-alpha, but it's a promising project, simple, cross-p
 
 # Installation
 
-Packages available for debian, fedora And Aur.
+Packages available for debian, fedora And [Aur](https://aur.archlinux.org/packages/twitch-downloader-gui).
 
 ### Dependencies
 
