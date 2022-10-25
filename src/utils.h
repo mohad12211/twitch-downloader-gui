@@ -19,7 +19,7 @@
 #include "../libs/ui.h"
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
-#define DEFAULT_PATH "/usr/share/twitch-downloader-gui/TwitchDownloaderCLI"
+#define DEFAULT_PATH "TwitchDownloaderCLI"
 
 typedef enum { PREPARE, DOWNLOADING, COMBINING, FINALIZING, PROGRESS, LOGGING, FINISH, STATUS } Flags;
 
