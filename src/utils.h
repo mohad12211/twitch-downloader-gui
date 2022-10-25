@@ -2,6 +2,7 @@
 #define UTILS_H
 #define _GNU_SOURCE
 #include <curl/curl.h>
+#include <locale.h>
 #include <math.h>
 #include <pthread.h>
 #include <regex.h>

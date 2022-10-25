@@ -226,6 +226,8 @@ static void renderBtnClicked(uiButton *b, void *args) {
 	uiFontDescriptor font;
 	uiFontButtonFont(renderOptions->fontOptions, &font);
 	char fontSize[9];
+	// use default locale so that the decimal symbol is dot '.' not a comma ','
+	setlocale(LC_NUMERIC, "C");
 	snprintf(fontSize, 9, "%f", font.Size);
 	concat(cmd, 4, " -f '", font.Family, "' --font-size ", fontSize);
 
@@ -262,16 +264,16 @@ static void renderBtnClicked(uiButton *b, void *args) {
 	}
 	if (uiCheckboxChecked(renderOptions->timestampCheck))
 		concat(cmd, 1, " --timestamp ");
-	if (uiCheckboxChecked(renderOptions->FFZEmotesCheck))
-		concat(cmd, 1, " --ffz ");
-	if (uiCheckboxChecked(renderOptions->BTTVEmotesCheck))
-		concat(cmd, 1, " --bttv ");
-	if (uiCheckboxChecked(renderOptions->sevenTVEmotesCheck))
-		concat(cmd, 1, " --stv ");
-	if (uiCheckboxChecked(renderOptions->subMsgCheck))
-		concat(cmd, 1, " --sub-messages ");
-	if (uiCheckboxChecked(renderOptions->chatBadgesCheck))
-		concat(cmd, 1, " --badges ");
+	if (!uiCheckboxChecked(renderOptions->FFZEmotesCheck))
+		concat(cmd, 1, " --ffz=false ");
+	if (!uiCheckboxChecked(renderOptions->BTTVEmotesCheck))
+		concat(cmd, 1, " --bttv=false ");
+	if (!uiCheckboxChecked(renderOptions->sevenTVEmotesCheck))
+		concat(cmd, 1, " --stv=false ");
+	if (!uiCheckboxChecked(renderOptions->subMsgCheck))
+		concat(cmd, 1, " --sub-messages=false ");
+	if (!uiCheckboxChecked(renderOptions->chatBadgesCheck))
+		concat(cmd, 1, " --badges=false ");
 
 	char *inputArgs = uiEntryText(renderOptions->inputArgs);
 	char *outputArgs = uiEntryText(renderOptions->outputArgs);
