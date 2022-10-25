@@ -12,8 +12,14 @@ The library is still in mid-alpha, but it's a promising project, simple, cross-p
 
 Packages available for debian, fedora And Aur.
 
-Pre-compiled packages will ship with `TwitchDownloadCLI` binary. You can specify another binary from the settings.
-If you compile from source/install for another distro. You need to spicify a path for `TwitchDownloaderCLI` in the settings or place it in `/usr/share/twitch-downloader-gui/TwitchDownloaderCLI`
+### Dependencies
+
+- ffmpeg (required to render chat and vods)
+- libcurl
+- TwitchDownloaderCLI (see below)
+
+**This is a just wrapper for the CLI, you still need the `TwitchDownloaderCLI` binary. By default the app will try to execute the binary from your `PATH`, 
+if you don't want to put `TwitchDownloaderCLI` in your path you can specify the binary path from the settings.**
 
 ## Building
 
