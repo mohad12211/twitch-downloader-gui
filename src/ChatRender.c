@@ -40,10 +40,15 @@ uiControl *ChatRenderDrawUi(void) {
 	uiFormAppend(advancedOptions, "Output Arguments:", uiControl(outputArgs), 0);
 	uiFormAppend(advancedOptions, "", uiControl(reset), 0);
 
+	uiBox *optionsVerticalBox = uiNewVerticalBox();
+	uiBoxSetPadded(optionsVerticalBox, 1);
+
 	uiBox *optionsBox = uiNewHorizontalBox();
 	uiBoxSetPadded(optionsBox, 1);
+	uiBoxAppend(optionsVerticalBox, uiControl(optionsBox), 0);
+
 	uiTab *tab = uiNewTab();
-	uiTabAppend(tab, "Options", uiControl(optionsBox));
+	uiTabAppend(tab, "Options", uiControl(optionsVerticalBox));
 	uiTabAppend(tab, "Advanced", uiControl(uiControl(advancedOptions)));
 	uiTabSetMargined(tab, 0, 1);
 	uiTabSetMargined(tab, 1, 1);
@@ -126,10 +131,6 @@ uiControl *ChatRenderDrawUi(void) {
 	uiFormSetPadded(thirdOptionsForm, 1);
 	uiBoxAppend(optionsBox, uiControl(thirdOptionsForm), 0);
 
-	uiEntry *leftPadding = uiNewEntry();
-	uiEntrySetText(leftPadding, "2");
-	uiFormAppend(thirdOptionsForm, "Left Padding:", uiControl(leftPadding), 0);
-
 	uiEntry *outlineSize = uiNewEntry();
 	uiEntrySetText(outlineSize, "4");
 	uiFormAppend(thirdOptionsForm, "Outline Size:", uiControl(outlineSize), 0);
@@ -164,6 +165,16 @@ uiControl *ChatRenderDrawUi(void) {
 	uiEntrySetText(outputArgs, containers[0].supportedCodecs[0].outputArgs);
 	uiFormAppend(thirdOptionsForm, "Codec:", uiControl(codecs), 0);
 
+	uiGrid *ignoreLIstGrid = uiNewGrid();
+	uiBoxAppend(optionsVerticalBox, uiControl(ignoreLIstGrid), 0);
+	uiForm *textForm = uiNewForm();
+	uiFormSetPadded(textForm, 0);
+	uiFormAppend(textForm, "Ignore users list: ",
+							 uiControl(uiNewLabel("<a href=\"\"title=\"List of usernames - comma separated, spaces around commas ignored\">(?)</a>  ")), 0);
+	uiEntry *ignoreListEntry = uiNewEntry();
+	uiGridAppend(ignoreLIstGrid, uiControl(textForm), 0, 0, 1, 1, 0, uiAlignCenter, 0, uiAlignCenter);
+	uiGridAppend(ignoreLIstGrid, uiControl(ignoreListEntry), 1, 0, 1, 1, 1, uiAlignFill, 0, uiAlignCenter);
+
 	uiForm *logForm = uiNewForm();
 	uiFormSetPadded(logForm, 1);
 	uiMultilineEntry *logsEntry = uiNewNonWrappingMultilineEntry();
@@ -188,7 +199,7 @@ uiControl *ChatRenderDrawUi(void) {
 	renderOptions = malloc(sizeof(ChatRenderOptions));
 	*renderOptions = (ChatRenderOptions){
 			fontOptions,				fontColor,	 backgroundColor, filePath,					 frameRate,		 width,					 height,				 updateTime,
-			leftPadding,				outlineSize, inputArgs,				outputArgs,				 outlineCheck, timestampCheck, FFZEmotesCheck, BTTVEmotesCheck,
+			ignoreListEntry,		outlineSize, inputArgs,				outputArgs,				 outlineCheck, timestampCheck, FFZEmotesCheck, BTTVEmotesCheck,
 			sevenTVEmotesCheck, subMsgCheck, chatBadgesCheck, generateMaskCheck, msgFontStyle, userFontStyle,	 containersBox,	 codecs,
 			logsEntry,					pBar,				 status,					renderBtn,				 browseBtn,		 NULL,
 	};
@@ -245,18 +256,18 @@ static void renderBtnClicked(uiButton *b, void *args) {
 		concat(cmd, 2, " --background-color ", fontColorHex);
 	}
 
-	char *fr, *width, *height, *updateTime, *leftPadding, *outlineSize;
+	char *fr, *width, *height, *updateTime, *outlineSize, *ignorelist;
 	fr = uiEntryText(renderOptions->frameRate);
 	width = uiEntryText(renderOptions->width);
 	height = uiEntryText(renderOptions->height);
 	updateTime = uiEntryText(renderOptions->updateTime);
-	leftPadding = uiEntryText(renderOptions->leftPadding);
 	outlineSize = uiEntryText(renderOptions->outlineSize);
+	ignorelist = uiEntryText(renderOptions->ignoreListEntry);
 	concat(cmd, 2, " --framerate ", fr);
 	concat(cmd, 2, " -w ", width);
 	concat(cmd, 2, " -h ", height);
 	concat(cmd, 2, " --update-rate ", updateTime);
-	concat(cmd, 2, " --padding-left ", leftPadding);
+	concat(cmd, 3, " --ignore-users \"", ignorelist, "\" ");
 
 	if (uiCheckboxChecked(renderOptions->outlineCheck)) {
 		concat(cmd, 1, " --outline ");
@@ -287,10 +298,10 @@ static void renderBtnClicked(uiButton *b, void *args) {
 	free(width);
 	free(height);
 	free(updateTime);
-	free(leftPadding);
 	free(outlineSize);
 	free(inputArgs);
 	free(outputArgs);
+	free(ignorelist);
 	uiFreeText(videoFile);
 	uiFreeText(chatFile);
 

@@ -9,7 +9,7 @@ typedef struct ChatRenderOptions {
 	uiEntry *width;
 	uiEntry *height;
 	uiEntry *updateTime;
-	uiEntry *leftPadding;
+	uiEntry *ignoreListEntry;
 	uiEntry *outlineSize;
 	uiEntry *inputArgs;
 	uiEntry *outputArgs;
