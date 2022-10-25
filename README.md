@@ -12,7 +12,7 @@ The library is still in mid-alpha, but it's a promising project, simple, cross-p
 
 Packages available for debian, fedora And Aur.
 
-## Dependencies
+### Dependencies
 
 - ffmpeg (required to render chat and vods)
 - libcurl
@@ -23,7 +23,7 @@ if you don't want to put `TwitchDownloaderCLI` in your path you can specify the 
 
 # Building
 
-## Build Dependencies
+### Build Dependencies
 
 - make
 - libcurl
