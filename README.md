@@ -4,15 +4,15 @@ This is a gui wrapper for the cli version of the great project [TwitchDownloader
 I used the library [libui-ng](https://github.com/libui-ng/libui-ng) with a few extra [patches](https://github.com/mohad12211/libui-ng).
 The library is still in mid-alpha, but it's a promising project, simple, cross-platform (macos can be done, I just don't care much about it) and very intuitive.
 
-## Preview
+# Preview
 
 ![preview](https://user-images.githubusercontent.com/51754973/167058990-a574493a-fd44-4f12-be59-185798fb93bf.gif)
 
-## Installation
+# Installation
 
 Packages available for debian, fedora And Aur.
 
-### Dependencies
+## Dependencies
 
 - ffmpeg (required to render chat and vods)
 - libcurl
@@ -21,9 +21,9 @@ Packages available for debian, fedora And Aur.
 **This is a just wrapper for the CLI, you still need the `TwitchDownloaderCLI` binary. By default the app will try to execute the binary from your `PATH`, 
 if you don't want to put `TwitchDownloaderCLI` in your path you can specify the binary path from the settings.**
 
-## Building
+# Building
 
-### Build Dependencies
+## Build Dependencies
 
 - make
 - libcurl
@@ -38,11 +38,11 @@ $ make
 
 binary is inside `build/bin`
 
-## Does it include all the features? any bugs?
+# Does it include all the features? any bugs?
 
 it includes the basic functionalities, There's no task queue.
 
-### Bugs...
+## Bugs...
 
 - You can only download the heighest quality for the vod (I will solve it soon).
 
