@@ -130,16 +130,16 @@ uiControl *VodDownloaderDrawUi(void) {
 
 	uiGrid *OAuthGrid = uiNewGrid();
 	uiBoxAppend(optionsBox, uiControl(OAuthGrid), 0);
-	uiForm *form = uiNewForm();
-	uiFormSetPadded(form, 0);
-	uiFormAppend(form, "OAuth (optional) : ",
+	uiForm *textForm = uiNewForm();
+	uiFormSetPadded(textForm, 0);
+	uiFormAppend(textForm, "OAuth (optional) : ",
 							 uiControl(uiNewLabel("<a href=\"https://www.youtube.com/watch?v=1MBsUoFGuls\"title=\"Only "
 																		"required for sub only VODs. All 3rd party OAuth "
 																		"tokens will not work. Click to see YouTube video "
 																		"on how to get OAuth token.\">(?)</a>  ")),
 							 0);
 	uiEntry *OAuth = uiNewEntry();
-	uiGridAppend(OAuthGrid, uiControl(form), 0, 0, 1, 1, 0, uiAlignCenter, 0, uiAlignCenter);
+	uiGridAppend(OAuthGrid, uiControl(textForm), 0, 0, 1, 1, 0, uiAlignCenter, 0, uiAlignCenter);
 	uiGridAppend(OAuthGrid, uiControl(OAuth), 1, 0, 1, 1, 1, uiAlignFill, 0, uiAlignCenter);
 
 	uiForm *dwnThreadForm = uiNewForm();
