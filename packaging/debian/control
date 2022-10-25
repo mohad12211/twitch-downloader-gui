@@ -1,0 +1,15 @@
+Source: twitch-downloader-gui
+Section: misc
+Priority: optional
+Maintainer: mohad12211 <mohammedkaabi64@gmail.com>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.5.0
+Homepage: https://github.com/mohad12211/TwitchDownloader-gui
+
+Package: twitch-downloader-gui
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}, ffmpeg, libcurl4
+Description: GUI Linux App to download Twitch clips/vods/chats and render the chat.
+ Download Clips, Vods, Chat in multiple formats from Twitch.tv.
+ A linux GUI app wrapper for the lay295/TwitchDownloader amazing project.
