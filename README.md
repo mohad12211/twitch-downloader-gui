@@ -1,4 +1,4 @@
-# TwitchDownloader-gui
+# twitch-downloader-gui
 
 This is a gui wrapper for the cli version of the great project [TwitchDownloader](https://github.com/lay295/TwitchDownloader), Linux only.
 I used the library [libui-ng](https://github.com/libui-ng/libui-ng) with a few extra [patches](https://github.com/mohad12211/libui-ng).
