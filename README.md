@@ -18,7 +18,7 @@ Packages available for debian, fedora And [Aur](https://aur.archlinux.org/packag
 - libcurl
 - TwitchDownloaderCLI (see below)
 
-**This is a just wrapper for the CLI, you still need the `TwitchDownloaderCLI` binary. By default the app will try to execute the binary from your `PATH`, 
+**This is a just wrapper for the CLI, you still need the `TwitchDownloaderCLI` binary. By default the app will try to execute the binary from your `PATH`,
 if you don't want to put `TwitchDownloaderCLI` in your path you can specify the binary path from the settings.**
 
 # Building

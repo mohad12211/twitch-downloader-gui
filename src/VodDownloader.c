@@ -26,7 +26,7 @@ uiControl *VodDownloaderDrawUi(void) {
 	uiFormSetPadded(linkForm, 1);
 	uiEntry *linkEntry = uiNewEntry();
 	uiButton *infoBtn = uiNewButton("Get info");
-	uiFormAppend(linkForm, "Clip/Vod Link: ", uiControl(linkEntry), 0);
+	uiFormAppend(linkForm, "Vod Link: ", uiControl(linkEntry), 0);
 	uiBoxAppend(linkBox, uiControl(linkForm), 1);
 	uiBoxAppend(linkBox, uiControl(infoBtn), 0);
 	uiBoxAppend(mainVerticalBox, uiControl(linkBox), 0);
