@@ -26,7 +26,7 @@ if you don't want to put `TwitchDownloaderCLI` in your path you can specify the 
 ### Build Dependencies
 
 - make
-- libcurl
+- libcurl (devel version)
 
 static library for libui is in the repo, but you can use your own compiled version and just replace it, instructions [here](https://github.com/mohad12211/libui-ng/blob/customs/README.md#quick-building-instructions)
 
