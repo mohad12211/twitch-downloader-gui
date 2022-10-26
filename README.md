@@ -35,7 +35,7 @@ static library for libui is in the repo, but you can use your own compiled versi
 $ git clone https://github.com/mohad12211/twitch-downloader-gui.git
 $ cd twitch-downloader-gui
 $ make
-$ make install # (if you want to install th app to your system)
+$ make install # (if you want to install the app to your system)
 $ make uninstall # (to uninstall)
 ```
 
