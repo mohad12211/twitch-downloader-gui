@@ -32,8 +32,8 @@ if you don't want to put `TwitchDownloaderCLI` in your path you can specify the 
 static library for libui is in the repo, but you can use your own compiled version and just replace it, instructions [here](https://github.com/mohad12211/libui-ng/blob/customs/README.md#quick-building-instructions)
 
 ```
-$ git clone https://github.com/mohad12211/TwitchDownloader-gui.git
-$ cd TwitchDownloader-gui
+$ git clone https://github.com/mohad12211/twitch-downloader-gui.git
+$ cd twitch-downloader-gui
 $ make
 ```
 
