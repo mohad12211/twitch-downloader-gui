@@ -3,4 +3,5 @@ Dockerfile
 debpkg/
 build/
 .vscode
+.vs
 extra/

@@ -239,7 +239,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
 	string *cmd = malloc(sizeof(string));
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
-	concat(cmd, 4, getBinaryPath(), " -m ChatDownload -u '", chatOptions->id, "'");
+	concat(cmd, 4, getBinaryPath(), " chatdownload -u '", chatOptions->id, "'");
 
 	if (uiCheckboxChecked(chatOptions->cropStartCheck)) {
 		char seconds[12];
