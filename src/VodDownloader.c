@@ -246,9 +246,9 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
 	char *OAuth = uiEntryText(vodOptions->OAuth);
 	if (strlen(OAuth))
-		concat(cmd, 2, " --oauth ", OAuth);
+		concat(cmd, 3, " --oauth \"", OAuth, "\" ");
 
-	concat(cmd, 3, " -o ", fileName, " 2>&1");
+	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
 	vodOptions->duration = endSec - startSec;
 	vodOptions->cmd = cmd;
 

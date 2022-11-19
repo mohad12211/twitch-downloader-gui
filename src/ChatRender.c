@@ -292,7 +292,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
 
 	concat(cmd, 5, " --input-args='", inputArgs, "' --output-args='", outputArgs, "' ");
 
-	concat(cmd, 3, " -o ", videoFile, " 2>&1 ");
+	concat(cmd, 3, " -o \"", videoFile, "\" 2>&1 ");
 	renderOptions->cmd = cmd;
 
 	free(fr);
