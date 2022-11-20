@@ -258,7 +258,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	}
 
 	if (uiCheckboxChecked(chatOptions->embedEmotes)) {
-		concat(cmd, 1, " --embed-emotes ");
+		concat(cmd, 1, " -E ");
 	}
 
 	concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder")->valuestring);
