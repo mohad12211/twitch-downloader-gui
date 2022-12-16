@@ -199,10 +199,37 @@ uiControl *ChatRenderDrawUi(void) {
 
 	renderOptions = malloc(sizeof(ChatRenderOptions));
 	*renderOptions = (ChatRenderOptions){
-			fontOptions,				fontColor,	 backgroundColor, filePath,					 frameRate,		 width,					 height,				 updateTime,
-			ignoreListEntry,		outlineSize, inputArgs,				outputArgs,				 outlineCheck, timestampCheck, FFZEmotesCheck, BTTVEmotesCheck,
-			sevenTVEmotesCheck, subMsgCheck, chatBadgesCheck, generateMaskCheck, msgFontStyle, userFontStyle,	 containersBox,	 codecs,
-			logsEntry,					pBar,				 status,					renderBtn,				 browseBtn,		 NULL,
+			fontOptions,
+			fontColor,
+			backgroundColor,
+			filePath,
+			frameRate,
+			width,
+			height,
+			updateTime,
+			ignoreListEntry,
+			outlineSize,
+			inputArgs,
+			outputArgs,
+			outlineCheck,
+			timestampCheck,
+			FFZEmotesCheck,
+			BTTVEmotesCheck,
+			sevenTVEmotesCheck,
+			subMsgCheck,
+			chatBadgesCheck,
+			generateMaskCheck,
+			msgFontStyle,
+			userFontStyle,
+			containersBox,
+			codecs,
+			logsEntry,
+			pBar,
+			status,
+			renderBtn,
+			browseBtn,
+			NULL,
+			0,
 	};
 
 	uiComboboxOnSelected(containersBox, containerChanged, NULL);
@@ -292,7 +319,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
 
 	concat(cmd, 5, " --input-args='", inputArgs, "' --output-args='", outputArgs, "' ");
 
-	concat(cmd, 3, " -o \"", videoFile, "\" 2>&1 ");
+	concat(cmd, 3, " -o \"", videoFile, "\" ");
 	renderOptions->cmd = cmd;
 
 	free(fr);
@@ -314,11 +341,14 @@ static void renderBtnClicked(uiButton *b, void *args) {
 static void *renderTask(void *args) {
 	char buf[200];
 	FILE *fp;
+	pid_t pid;
 
-	if ((fp = popen((char *)renderOptions->cmd->memory, "r")) == NULL) {
+	if ((fp = mypopen((char *)renderOptions->cmd->memory, &pid)) == NULL) {
 		printf("Error opening pipe!\n");
 		return NULL;
 	}
+
+	renderOptions->renderpid = pid;
 
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
@@ -341,12 +371,14 @@ static void *renderTask(void *args) {
 	}
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = mypclose(fp, pid)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(renderOptions->cmd->memory);
 	free(renderOptions->cmd);
 	renderOptions->cmd = NULL;
+	renderOptions->renderpid = 0;
+
 	return NULL;
 }
 
@@ -395,6 +427,8 @@ static void runOnUiThread(void *args) {
 		free(data->buf);
 		break;
 	case FINISH:
+		if (WIFEXITED(data->i) && WEXITSTATUS(data->i) == 143)
+			break;
 		if (data->i) {
 			uiLabelSetText(renderOptions->status, "Error...");
 			uiProgressBarSetValue(renderOptions->pBar, 0);
@@ -412,42 +446,72 @@ static void runOnUiThread(void *args) {
 	free(data);
 }
 
-static const container containers[4] = {
-		{"MP4",
-		 "chat.mp4",
-		 "mp4 File (*.mp4)|*.mp4",
-		 {{"H264", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"H265", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"H264 NVIDIA", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v h264_nvenc -preset fast -cq 20 -pix_fmt yuv420p \"{save_path}\""}}},
-		{"MOV",
-		 "chat.mov",
-		 "mov file (*.mov)|*.mov",
-		 {{"H264", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"H265", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"ProRes", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v prores_ks -qscale:v 62 -pix_fmt argb \"{save_path}\""},
-			{"RLE", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v qtrle -pix_fmt argb \"{save_path}\""}}},
-		{"WEBM",
-		 "chat.webm",
-		 "webm File (*.webm)|*.webm",
-		 {{"VP8", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 \"{save_path}\""},
-			{"VP9", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}},
-		{"MKV",
-		 "chat.mkv",
-		 "mkv File (*.mkv)|*.mkv",
-		 {{"H264", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"H265", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
-			{"VP8", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 \"{save_path}\""},
-			{"VP9", "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size {width}x{height} -i -",
-			 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}}};
+void ChatRenderResetUi(void) {
+	if (renderOptions->renderpid)
+		killpg(renderOptions->renderpid, SIGTERM);
+}
+
+static const container containers[4] = {{"MP4",
+																				 "chat.mp4",
+																				 "mp4 File (*.mp4)|*.mp4",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"H264 NVIDIA",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v h264_nvenc -preset fast -cq 20 -pix_fmt yuv420p \"{save_path}\""}}},
+																				{"MOV",
+																				 "chat.mov",
+																				 "mov file (*.mov)|*.mov",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"ProRes",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v prores_ks -qscale:v 62 -pix_fmt argb \"{save_path}\""},
+																					{"RLE",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v qtrle -pix_fmt argb \"{save_path}\""}}},
+																				{"WEBM",
+																				 "chat.webm",
+																				 "webm File (*.webm)|*.webm",
+																				 {{"VP8",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 \"{save_path}\""},
+																					{"VP9",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}},
+																				{"MKV",
+																				 "chat.mkv",
+																				 "mkv File (*.mkv)|*.mkv",
+																				 {{"H264",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"H265",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libx265 -preset veryfast -crf 18 -pix_fmt yuv420p \"{save_path}\""},
+																					{"VP8",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libvpx -crf 18 -b:v 2M -pix_fmt yuva420p -auto-alt-ref 0 \"{save_path}\""},
+																					{"VP9",
+																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
+																					 "{width}x{height} -i -",
+																					 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}}};

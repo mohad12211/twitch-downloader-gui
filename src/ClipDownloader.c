@@ -115,7 +115,8 @@ uiControl *ClipDownloaderDrawUi(void) {
 
 	clipOptions = malloc(sizeof(ClipOptions));
 	*clipOptions = (ClipOptions){
-			qualities, linkEntry, nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar, status, downloadBtn, infoBtn, NULL, NULL, imageArea, handler,
+			qualities, linkEntry,		nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar,
+			status,		 downloadBtn, infoBtn,	 NULL,			 NULL,					imageArea,		0,				 handler,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
@@ -155,7 +156,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 	concat(cmd, 3, getBinaryPath(), " clipdownload -u ", clipOptions->id);
 	concat(cmd, 2, " -q ", qualityArray[uiComboboxSelected(clipOptions->qualities)]);
-	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
+	concat(cmd, 3, " -o \"", fileName, "\" ");
 
 	clipOptions->cmd = cmd;
 
@@ -169,11 +170,14 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 static void *downloadTask(void *args) {
 	char buf[200];
 	FILE *fp;
+	pid_t pid;
 
-	if ((fp = popen((char *)clipOptions->cmd->memory, "r")) == NULL) {
+	if ((fp = mypopen((char *)clipOptions->cmd->memory, &pid)) == NULL) {
 		printf("Error opening pipe!\n");
 		return NULL;
 	}
+
+	clipOptions->downloadpid = pid;
 
 	uiData *data = malloc(sizeof(uiData));
 	*data = (uiData){.flag = DOWNLOADING};
@@ -186,12 +190,13 @@ static void *downloadTask(void *args) {
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = mypclose(fp, pid)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(clipOptions->cmd->memory);
 	free(clipOptions->cmd);
 	clipOptions->cmd = NULL;
+	clipOptions->downloadpid = 0;
 
 	return NULL;
 }
@@ -249,8 +254,9 @@ static void setInfo(char *id) {
 }
 
 // https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
-// stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian, so little-endian, so it will be BGRA
-// so I have to swap the B and the R, the image is 480x272 so should be fast.
+// stb gets the image in RGBA, but cairo needs it in ARGB, AND in native-endian,
+// so little-endian, so it will be BGRA so I have to swap the B and the R, the
+// image is 480x272 so should be fast.
 static void setThumbnail(char *link) {
 	int x, y, n;
 	string *response = requestImage(link);
@@ -311,6 +317,8 @@ static void runOnUiThread(void *args) {
 		free(data->buf);
 		break;
 	case FINISH:
+		if (WIFEXITED(data->i) && WEXITSTATUS(data->i) == 143)
+			break;
 		if (data->i) {
 			uiLabelSetText(clipOptions->status, "Error...");
 			uiProgressBarSetValue(clipOptions->pBar, 0);
@@ -328,6 +336,8 @@ static void runOnUiThread(void *args) {
 }
 
 void ClipDownloaderResetUi(void) {
+	if (clipOptions->downloadpid)
+		killpg(clipOptions->downloadpid, SIGTERM);
 	free(clipOptions->id);
 	clipOptions->id = NULL;
 	stbi_image_free(clipOptions->handler->binaryData);

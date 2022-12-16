@@ -30,6 +30,7 @@ typedef struct {
 	uiCheckbox *embedEmotes;
 	uiArea *imageArea;
 	struct handler *handler;
+	pid_t downloadpid;
 } ChatDwnOptions;
 
 uiControl *ChatDownloaderDrawUi(void);

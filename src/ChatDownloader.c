@@ -179,7 +179,7 @@ uiControl *ChatDownloaderDrawUi(void) {
 	*chatOptions = (ChatDwnOptions){
 			linkEntry, nameLabel, titleLabel,			 durationLabel, createdLabel,		logsEntry,		pBar,					 status,			 downloadBtn, infoBtn,
 			NULL,			 NULL,			downloadFormats, timeFormats,		cropStartCheck, cropEndCheck, startSpinsBox, cropStartBox, endSpinsBox, cropEndBox,
-			startHour, startMin,	startSec,				 endHour,				endMin,					endSec,				embedEmotes,	 imageArea,		 handler,
+			startHour, startMin,	startSec,				 endHour,				endMin,					endSec,				embedEmotes,	 imageArea,		 handler,			0,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnCallBack, NULL);
@@ -263,7 +263,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 
 	concat(cmd, 3, " --temp-path \"", getJson(configJson, "tempFolder")->valuestring, "\" ");
 
-	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
+	concat(cmd, 3, " -o \"", fileName, "\" ");
 	chatOptions->cmd = cmd;
 
 	uiFreeText(fileName);
@@ -276,11 +276,14 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 static void *downloadTask(void *args) {
 	char buf[200];
 	FILE *fp;
+	pid_t pid;
 
-	if ((fp = popen((char *)chatOptions->cmd->memory, "r")) == NULL) {
+	if ((fp = mypopen((char *)chatOptions->cmd->memory, &pid)) == NULL) {
 		printf("Error opening pipe!\n");
 		return NULL;
 	}
+
+	chatOptions->downloadpid = pid;
 
 	uiData *data = malloc(sizeof(uiData));
 	*data = (uiData){.flag = DOWNLOADING};
@@ -301,12 +304,13 @@ static void *downloadTask(void *args) {
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = mypclose(fp, pid)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(chatOptions->cmd->memory);
 	free(chatOptions->cmd);
 	chatOptions->cmd = NULL;
+	chatOptions->downloadpid = 0;
 
 	return NULL;
 }
@@ -459,6 +463,8 @@ static void runOnUiThread(void *args) {
 		free(data->buf);
 		break;
 	case FINISH:
+		if (WIFEXITED(data->i) && WEXITSTATUS(data->i) == 143)
+			break;
 		if (data->i) {
 			uiLabelSetText(chatOptions->status, "Error...");
 			uiProgressBarSetValue(chatOptions->pBar, 0);
@@ -478,6 +484,8 @@ static void runOnUiThread(void *args) {
 }
 
 void ChatDownloaderResetUi(void) {
+	if (chatOptions->downloadpid)
+		killpg(chatOptions->downloadpid, SIGTERM);
 	free(chatOptions->id);
 	chatOptions->id = NULL;
 	stbi_image_free(chatOptions->handler->binaryData);

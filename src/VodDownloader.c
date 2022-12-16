@@ -177,7 +177,7 @@ uiControl *VodDownloaderDrawUi(void) {
 	*vodOptions = (VodOptions){
 			linkEntry, nameLabel, titleLabel, durationLabel,	createdLabel, logsEntry,		 pBar,					 status,			downloadBtn, infoBtn,
 			NULL,			 NULL,			0,					cropStartCheck, cropEndCheck, startSpinsBox, cropStartBox,	 endSpinsBox, cropEndBox,	 startHour,
-			startMin,	 startSec,	endHour,		endMin,					endSec,				OAuth,				 dwnThreadsSpin, imageArea,		handler,
+			startMin,	 startSec,	endHour,		endMin,					endSec,				OAuth,				 dwnThreadsSpin, imageArea,		handler,		 0,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
@@ -248,7 +248,7 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	if (strlen(OAuth))
 		concat(cmd, 3, " --oauth \"", OAuth, "\" ");
 
-	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
+	concat(cmd, 3, " -o \"", fileName, "\" ");
 	vodOptions->duration = endSec - startSec;
 	vodOptions->cmd = cmd;
 
@@ -267,11 +267,14 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 static void *downloadTask(void *args) {
 	char buf[200];
 	FILE *fp;
+	pid_t pid;
 
-	if ((fp = popen((char *)vodOptions->cmd->memory, "r")) == NULL) {
+	if ((fp = mypopen((char *)vodOptions->cmd->memory, &pid)) == NULL) {
 		printf("Error opening pipe!\n");
 		return NULL;
 	}
+
+	vodOptions->downloadpid = pid;
 
 	uiData *data = malloc(sizeof(uiData));
 	*data = (uiData){.flag = PREPARE};
@@ -299,12 +302,13 @@ static void *downloadTask(void *args) {
 	}
 
 	data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = FINISH, .i = pclose(fp)};
+	*data = (uiData){.flag = FINISH, .i = mypclose(fp, pid)};
 	uiQueueMain(runOnUiThread, data);
 
 	free(vodOptions->cmd->memory);
 	free(vodOptions->cmd);
 	vodOptions->cmd = NULL;
+	vodOptions->downloadpid = 0;
 
 	return NULL;
 }
@@ -397,7 +401,6 @@ static void runOnUiThread(void *args) {
 		uiLabelSetText(vodOptions->status, "Preparing...");
 		uiProgressBarSetValue(vodOptions->pBar, -1);
 		break;
-
 	case DOWNLOADING:
 		uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
 		uiLabelSetText(vodOptions->status, "Downloading...(1/3)");
@@ -420,6 +423,8 @@ static void runOnUiThread(void *args) {
 		free(data->buf);
 		break;
 	case FINISH:
+		if (WIFEXITED(data->i) && WEXITSTATUS(data->i) == 143)
+			break;
 		if (data->i) {
 			uiLabelSetText(vodOptions->status, "Error...");
 			uiProgressBarSetValue(vodOptions->pBar, 0);
@@ -437,6 +442,8 @@ static void runOnUiThread(void *args) {
 }
 
 void VodDownloaderResetUi(void) {
+	if (vodOptions->downloadpid)
+		killpg(vodOptions->downloadpid, SIGTERM);
 	free(vodOptions->id);
 	vodOptions->id = NULL;
 	stbi_image_free(vodOptions->handler->binaryData);

@@ -34,6 +34,7 @@ static int onClosing(uiWindow *w, void *data) {
 	ChatDownloaderResetUi();
 	ClipDownloaderResetUi();
 	VodDownloaderResetUi();
+	ChatRenderResetUi();
 	uiQuit();
 	saveConfig();
 	return 1;
@@ -43,6 +44,7 @@ static int onShouldQuit(void *data) {
 	ChatDownloaderResetUi();
 	ClipDownloaderResetUi();
 	VodDownloaderResetUi();
+	ChatRenderResetUi();
 	uiControlDestroy(uiControl(data));
 	saveConfig();
 	return 1;

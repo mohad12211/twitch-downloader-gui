@@ -30,6 +30,7 @@ typedef struct {
 	uiSpinbox *dwnThreadsSpin;
 	uiArea *imageArea;
 	struct handler *handler;
+	pid_t downloadpid;
 } VodOptions;
 
 uiControl *VodDownloaderDrawUi(void);

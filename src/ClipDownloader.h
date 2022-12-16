@@ -17,6 +17,7 @@ typedef struct {
 	char *id;
 	string *cmd;
 	uiArea *imageArea;
+	pid_t downloadpid;
 	struct handler *handler;
 } ClipOptions;
 

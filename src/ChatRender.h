@@ -31,6 +31,7 @@ typedef struct ChatRenderOptions {
 	uiButton *renderBtn;
 	uiButton *browseBtn;
 	string *cmd;
+	pid_t renderpid;
 } ChatRenderOptions;
 
 typedef struct {
@@ -45,3 +46,4 @@ typedef struct {
 } container;
 
 uiControl *ChatRenderDrawUi(void);
+void ChatRenderResetUi(void);
