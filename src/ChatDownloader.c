@@ -155,7 +155,7 @@ uiControl *ChatDownloaderDrawUi(void) {
 
 	uiForm *logForm = uiNewForm();
 	uiFormSetPadded(logForm, 1);
-	uiMultilineEntry *logsEntry = uiNewMultilineEntry();
+	uiMultilineEntry *logsEntry = uiNewNonWrappingMultilineEntry();
 	uiMultilineEntrySetReadOnly(logsEntry, 1);
 	uiFormAppend(logForm, "Logs: ", uiControl(logsEntry), 1);
 	uiBoxAppend(middleHorizontalBox, uiControl(logForm), 1);
