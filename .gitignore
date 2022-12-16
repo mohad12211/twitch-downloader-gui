@@ -4,4 +4,6 @@ debpkg/
 build/
 .vscode
 .vs
+.cache/
 extra/
+compile_commands.json
