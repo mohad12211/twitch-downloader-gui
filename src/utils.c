@@ -144,3 +144,42 @@ char *getBinaryPath(void) {
 		return binaryJson->valuestring;
 	}
 }
+
+// popen that gives the pid of the process
+// returns a FILE that reads both stdout and stderr
+FILE *mypopen(const char *cmd, pid_t *pid_ptr) {
+	char *argv[] = {"sh", "-c", (char *)cmd, NULL};
+	FILE *f;
+	int pdes[2];
+	pid_t pid;
+
+	if (pipe(pdes) < 0)
+		return NULL;
+
+	switch (pid = fork()) {
+	case -1:
+		close(pdes[0]);
+		close(pdes[1]);
+		return NULL;
+	case 0:
+		if (setsid() == -1)
+			return NULL;
+		close(pdes[0]);
+		dup2(pdes[1], STDOUT_FILENO);
+		dup2(pdes[1], STDERR_FILENO);
+		close(pdes[1]);
+		execvp("sh", argv);
+	}
+	f = fdopen(pdes[0], "r");
+	*pid_ptr = pid;
+	close(pdes[1]);
+	return f;
+}
+
+int mypclose(FILE *f, pid_t pid) {
+	int pstat;
+	int returned_pid;
+	returned_pid = waitpid(pid, &pstat, 0);
+	fclose(f);
+	return returned_pid == -1 ? -1 : pstat;
+}
