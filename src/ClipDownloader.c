@@ -154,7 +154,6 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	string *cmd = malloc(sizeof(string));
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 	concat(cmd, 3, getBinaryPath(), " clipdownload -u ", clipOptions->id);
-	concat(cmd, 2, " --temp-path ", getJson(configJson, "tempFolder")->valuestring);
 	concat(cmd, 2, " -q ", qualityArray[uiComboboxSelected(clipOptions->qualities)]);
 	concat(cmd, 3, " -o \"", fileName, "\" 2>&1");
 
