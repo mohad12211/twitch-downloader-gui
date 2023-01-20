@@ -1,5 +1,5 @@
 Name:           twitch-downloader-gui
-Version:        1.0
+Version:        2.0.0
 Release:        1%{?dist}
 Summary:        GUI Linux App to download clips/vods/chats and render chat for Twitch
 
