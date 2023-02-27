@@ -50,7 +50,15 @@ void ShowPreferences(void) {
 	uiForm *customBinaryForm = uiNewForm();
 	uiFormSetPadded(customBinaryForm, 1);
 	uiEntry *customBinaryEntry = uiNewEntry();
-	uiEntrySetText(customBinaryEntry, getJson(configJson, "binaryPath")->valuestring);
+	char *selectedCustomBinary = getJson(configJson, "binaryPath")->valuestring;
+	if (strlen(selectedCustomBinary)) {
+		char without_quotes[strlen(selectedCustomBinary) + 1];
+		strcpy(without_quotes, selectedCustomBinary + 1);
+		without_quotes[strlen(without_quotes) - 1] = '\0';
+		uiEntrySetText(customBinaryEntry, without_quotes);
+	} else {
+		uiEntrySetText(customBinaryEntry, selectedCustomBinary);
+	}
 	uiButton *browseBinaryBtn = uiNewButton("Browse");
 	uiFormAppend(customBinaryForm, "Binary Path:", uiControl(customBinaryEntry), 0);
 	uiBoxAppend(customBinaryBox, uiControl(customBinaryForm), 1);
@@ -74,7 +82,9 @@ void ShowPreferences(void) {
 static int preferencesOnClose(uiWindow *w, void *data) {
 	char *selectedCustomBinary = uiEntryText(prefOptions->customBinaryEntry);
 	if (strlen(selectedCustomBinary)) {
-		setJson(configJson, "binaryPath", cJSON_CreateString(selectedCustomBinary));
+		char with_quotes[strlen(selectedCustomBinary) + 2 + 1];
+		sprintf(with_quotes, "'%s'", selectedCustomBinary);
+		setJson(configJson, "binaryPath", cJSON_CreateString(with_quotes));
 	}
 	uiFreeText(selectedCustomBinary);
 
