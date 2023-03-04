@@ -8,3 +8,6 @@ build/
 .cache/
 extra/
 compile_commands.json
+*.suo
+*.user
+*.userosscache
