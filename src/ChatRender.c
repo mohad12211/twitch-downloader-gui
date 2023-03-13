@@ -249,8 +249,18 @@ static void browseBtnClicked(uiButton *b, void *args) {
 
 static void renderBtnClicked(uiButton *b, void *args) {
 	int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
-	char *videoFile = uiSaveFile(mainwin, NULL, containers[selectedContainer].defaultName, containers[selectedContainer].filter);
 	char *chatFile = uiEntryText(renderOptions->filePath);
+	char *name = strrchr(chatFile, '/') + 1;
+	// "abcdefg.json"
+	//          ^
+	//       strlen-4
+	int offset = strlen(name) - 4;
+	size_t i = 0;
+	for (; i < strlen(containers[selectedContainer].name); i++) {
+		name[i + offset] = tolower(containers[selectedContainer].name[i]);
+	}
+	name[i + offset] = '\0';
+	char *videoFile = uiSaveFile(mainwin, NULL, name, containers[selectedContainer].filter);
 	if (videoFile == NULL) {
 		uiFreeText(chatFile);
 		return;
@@ -452,7 +462,6 @@ void ChatRenderResetUi(void) {
 }
 
 static const container containers[4] = {{"MP4",
-																				 "chat.mp4",
 																				 "mp4 File (*.mp4)|*.mp4",
 																				 {{"H264",
 																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
@@ -467,7 +476,6 @@ static const container containers[4] = {{"MP4",
 																					 "{width}x{height} -i -",
 																					 "-c:v h264_nvenc -preset fast -cq 20 -pix_fmt yuv420p \"{save_path}\""}}},
 																				{"MOV",
-																				 "chat.mov",
 																				 "mov file (*.mov)|*.mov",
 																				 {{"H264",
 																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
@@ -486,7 +494,6 @@ static const container containers[4] = {{"MP4",
 																					 "{width}x{height} -i -",
 																					 "-c:v qtrle -pix_fmt argb \"{save_path}\""}}},
 																				{"WEBM",
-																				 "chat.webm",
 																				 "webm File (*.webm)|*.webm",
 																				 {{"VP8",
 																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "
@@ -497,7 +504,6 @@ static const container containers[4] = {{"MP4",
 																					 "{width}x{height} -i -",
 																					 "-c:v libvpx-vp9 -crf 18 -b:v 2M -pix_fmt yuva420p \"{save_path}\""}}},
 																				{"MKV",
-																				 "chat.mkv",
 																				 "mkv File (*.mkv)|*.mkv",
 																				 {{"H264",
 																					 "-framerate {fps} -f rawvideo -analyzeduration {max_int} -probesize {max_int} -pix_fmt bgra -video_size "

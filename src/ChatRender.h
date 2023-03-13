@@ -36,7 +36,6 @@ typedef struct ChatRenderOptions {
 
 typedef struct {
 	const char *const name;
-	const char *const defaultName;
 	const char *const filter;
 	const struct codec {
 		const char *const name;

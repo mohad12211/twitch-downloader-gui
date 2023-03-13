@@ -209,7 +209,11 @@ err:
 }
 
 static void downloadBtnClicked(uiButton *b, void *data) {
-	char *fileName = uiSaveFile(mainwin, NULL, "vod.mp4", "mp4 File (*.mp4)|*.mp4");
+	char *title = uiLabelText(vodOptions->titleLabel);
+	char defaultName[strlen(title) + strlen(".mp4") + 1];
+	sprintf(defaultName, "%s%s", title, ".mp4");
+	char *fileName = uiSaveFile(mainwin, NULL, defaultName, "mp4 File (*.mp4)|*.mp4");
+	uiFreeText(title);
 	if (fileName == NULL) {
 		return;
 	}

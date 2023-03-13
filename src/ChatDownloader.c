@@ -228,11 +228,15 @@ static void infoBtnCallBack(uiButton *b, void *data) {
 }
 
 static void downloadBtnClicked(uiButton *b, void *data) {
+	char *title = uiLabelText(chatOptions->titleLabel);
+	// .json = 5, .txt = 4, we allocate 5.
+	char defaultName[strlen(title) + 5 + 1];
 	int format = uiRadioButtonsSelected(chatOptions->downloadFormats);
-	// TODO: change this to what I *will* be using for ChatRender containersBox
-	char *defaultName = format == 0 ? "chat.json" : "chat.txt";
+	char *formatExt = format == 0 ? ".json" : ".txt";
 	char *filter = format == 0 ? "JSON File (*.json)|*.json" : "Text File (*.txt)|*.txt";
+	sprintf(defaultName, "%s%s", title, formatExt);
 	char *fileName = uiSaveFile(mainwin, NULL, defaultName, filter);
+	uiFreeText(title);
 	if (fileName == NULL) {
 		return;
 	}

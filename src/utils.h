@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 #define _GNU_SOURCE
+#include <ctype.h>
 #include <curl/curl.h>
 #include <locale.h>
 #include <math.h>
