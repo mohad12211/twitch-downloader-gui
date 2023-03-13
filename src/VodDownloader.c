@@ -295,8 +295,10 @@ static void *downloadTask(void *args) {
 		} else if (strstr(buf, "Finalizing")) {
 			*logData = (uiData){.flag = FINALIZING};
 		} else if (strstr(buf, "time=")) {
-			if (strstr(buf, "speed=N/A"))
+			if (strstr(buf, "speed=N/A")) {
+				free(logData);
 				continue;
+			}
 			struct tm progress;
 			strptime(strstr(buf, "time=") + 5, "%H:%M:%S", &progress);
 			float progressSeconds = progress.tm_hour * 3600 + progress.tm_min * 60 + progress.tm_sec;
