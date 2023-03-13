@@ -89,6 +89,13 @@ uiControl *ClipDownloaderDrawUi(void) {
 	uiFormAppend(qualityForm, "Quality: ", uiControl(qualities), 0);
 	uiBoxAppend(middleHorizontalBox, uiControl(qualityForm), 0);
 
+	uiForm *dwnBandwidthSpin = uiNewForm();
+	uiFormSetPadded(dwnBandwidthSpin, 1);
+	uiSpinbox *dwnBandwidthSpin = uiNewSpinbox(128, 40960); // 128KB/s - 40MB/s
+	uiSpinboxSetValue(dwnBandwidthSpin, 8192);
+	uiFormAppend(dwnBandwidthSpin, "Bandwidth Limit (KB/s):", uiControl(dwnBandwidthSpin), 0);
+	uiBoxAppend(middleHorizontalBox, uiControl(dwnBandwidthSpin), 0);
+
 	uiBoxAppend(middleHorizontalBox, uiControl(uiNewVerticalSeparator()), 0);
 
 	uiForm *logForm = uiNewForm();
@@ -115,7 +122,7 @@ uiControl *ClipDownloaderDrawUi(void) {
 
 	clipOptions = malloc(sizeof(ClipOptions));
 	*clipOptions = (ClipOptions){
-			qualities, linkEntry,		nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar,
+			qualities, dwnBandwidthSpin, linkEntry,		nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar,
 			status,		 downloadBtn, infoBtn,	 NULL,			 NULL,					imageArea,		0,				 handler,
 	};
 
@@ -156,6 +163,11 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 	concat(cmd, 3, getBinaryPath(), " clipdownload -u ", clipOptions->id);
 	concat(cmd, 2, " -q ", qualityArray[uiComboboxSelected(clipOptions->qualities)]);
+	
+	char dwnBandwidth[12];
+	sprintf(dwnBandwidth, "%d", uiSpinboxValue(vodOptions->threadBandwidthSpin));
+	concat(cmd, 2, " --bandwidth ", dwnBandwidth);
+
 	concat(cmd, 3, " -o \"", fileName, "\" ");
 
 	clipOptions->cmd = cmd;

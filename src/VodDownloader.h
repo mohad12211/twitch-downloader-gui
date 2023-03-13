@@ -28,6 +28,7 @@ typedef struct {
 	uiSpinbox *endSec;
 	uiEntry *OAuth;
 	uiSpinbox *dwnThreadsSpin;
+	uiSpinbox *threadBandwidthSpin;
 	uiArea *imageArea;
 	struct handler *handler;
 	pid_t downloadpid;
