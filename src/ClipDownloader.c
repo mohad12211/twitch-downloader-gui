@@ -83,18 +83,17 @@ uiControl *ClipDownloaderDrawUi(void) {
 
 	uiBoxAppend(middleHorizontalBox, uiControl(uiNewVerticalSeparator()), 0);
 
-	uiForm *qualityForm = uiNewForm();
-	uiFormSetPadded(qualityForm, 1);
-	uiCombobox *qualities = uiNewCombobox();
-	uiFormAppend(qualityForm, "Quality: ", uiControl(qualities), 0);
-	uiBoxAppend(middleHorizontalBox, uiControl(qualityForm), 0);
+	uiForm *optionsForm = uiNewForm();
+	uiFormSetPadded(optionsForm, 1);
 
-	uiForm *dwnBandwidthSpin = uiNewForm();
-	uiFormSetPadded(dwnBandwidthSpin, 1);
+	uiCombobox *qualities = uiNewCombobox();
+	uiFormAppend(optionsForm, "Quality: ", uiControl(qualities), 0);
+
 	uiSpinbox *dwnBandwidthSpin = uiNewSpinbox(128, 40960); // 128KB/s - 40MB/s
 	uiSpinboxSetValue(dwnBandwidthSpin, 8192);
-	uiFormAppend(dwnBandwidthSpin, "Bandwidth Limit (KB/s):", uiControl(dwnBandwidthSpin), 0);
-	uiBoxAppend(middleHorizontalBox, uiControl(dwnBandwidthSpin), 0);
+	uiFormAppend(optionsForm, "Bandwidth Limit (KB/s):", uiControl(dwnBandwidthSpin), 0);
+
+	uiBoxAppend(middleHorizontalBox, uiControl(optionsForm), 0);
 
 	uiBoxAppend(middleHorizontalBox, uiControl(uiNewVerticalSeparator()), 0);
 
@@ -122,8 +121,8 @@ uiControl *ClipDownloaderDrawUi(void) {
 
 	clipOptions = malloc(sizeof(ClipOptions));
 	*clipOptions = (ClipOptions){
-			qualities, dwnBandwidthSpin, linkEntry,		nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar,
-			status,		 downloadBtn, infoBtn,	 NULL,			 NULL,					imageArea,		0,				 handler,
+			qualities, dwnBandwidthSpin, linkEntry, nameLabel, titleLabel, durationLabel, createdLabel, logsEntry, pBar, status, downloadBtn, infoBtn, NULL,
+			NULL,			 imageArea,				 0,					handler,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
@@ -163,9 +162,9 @@ static void downloadBtnClicked(uiButton *b, void *data) {
 	*cmd = (string){malloc(sizeof(char) * 100), 0, 100};
 	concat(cmd, 3, getBinaryPath(), " clipdownload -u ", clipOptions->id);
 	concat(cmd, 2, " -q ", qualityArray[uiComboboxSelected(clipOptions->qualities)]);
-	
+
 	char dwnBandwidth[12];
-	sprintf(dwnBandwidth, "%d", uiSpinboxValue(vodOptions->threadBandwidthSpin));
+	sprintf(dwnBandwidth, "%d", uiSpinboxValue(clipOptions->dwnBandwidthSpin));
 	concat(cmd, 2, " --bandwidth ", dwnBandwidth);
 
 	concat(cmd, 3, " -o \"", fileName, "\" ");

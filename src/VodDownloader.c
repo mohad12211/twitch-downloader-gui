@@ -149,12 +149,12 @@ uiControl *VodDownloaderDrawUi(void) {
 	uiFormAppend(dwnThreadForm, "Download Threads:", uiControl(dwnThreadsSpin), 0);
 	uiBoxAppend(optionsBox, uiControl(dwnThreadForm), 0);
 
-	uiForm *threadBandwidthSpin = uiNewForm();
-	uiFormSetPadded(threadBandwidthSpin, 1);
+	uiForm *threadBandwidthForm = uiNewForm();
+	uiFormSetPadded(threadBandwidthForm, 1);
 	uiSpinbox *threadBandwidthSpin = uiNewSpinbox(128, 40960); // 128KB/s - 40MB/s
 	uiSpinboxSetValue(threadBandwidthSpin, 2048);
-	uiFormAppend(threadBandwidthSpin, "Bandwidth Per Thread (KB/s):", uiControl(threadBandwidthSpin), 0);
-	uiBoxAppend(optionsBox, uiControl(threadBandwidthSpin), 0);
+	uiFormAppend(threadBandwidthForm, "Bandwidth Per Thread (KB/s):", uiControl(threadBandwidthSpin), 0);
+	uiBoxAppend(optionsBox, uiControl(threadBandwidthForm), 0);
 
 	uiBoxAppend(middleHorizontalBox, uiControl(uiNewVerticalSeparator()), 0);
 
@@ -182,9 +182,9 @@ uiControl *VodDownloaderDrawUi(void) {
 
 	vodOptions = malloc(sizeof(VodOptions));
 	*vodOptions = (VodOptions){
-			linkEntry, nameLabel, titleLabel, durationLabel,	createdLabel, logsEntry,		 pBar,					 status,			downloadBtn, infoBtn,
-			NULL,			 NULL,			0,					cropStartCheck, cropEndCheck, startSpinsBox, cropStartBox,	 endSpinsBox, cropEndBox,	 startHour,
-			startMin,	 startSec,	endHour,	endMin,			endSec,			OAuth,		 dwnThreadsSpin, threadBandwidthSpin, imageArea,		handler,	 0,
+			linkEntry, nameLabel, titleLabel,			durationLabel, createdLabel,	 logsEntry,						pBar,				 status,		 downloadBtn, infoBtn,	NULL,
+			NULL,			 0,					cropStartCheck, cropEndCheck,	 startSpinsBox,	 cropStartBox,				endSpinsBox, cropEndBox, startHour,		startMin, startSec,
+			endHour,	 endMin,		endSec,					OAuth,				 dwnThreadsSpin, threadBandwidthSpin, imageArea,	 handler,		 0,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
