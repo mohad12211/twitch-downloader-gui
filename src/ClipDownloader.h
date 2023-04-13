@@ -4,6 +4,7 @@
 
 typedef struct {
 	uiCombobox *qualities;
+	uiSpinbox *dwnBandwidthSpin;
 	uiEntry *linkEntry;
 	uiLabel *nameLabel;
 	uiLabel *titleLabel;
