@@ -429,7 +429,7 @@ static void runOnUiThread(void *args) {
 		uiLabelSetText(vodOptions->status, "Combining Parts...(2/3)");
 		break;
 	case FINALIZING:
-		uiLabelSetText(vodOptions->status, "Finazlizing Video...(3/3)");
+		uiLabelSetText(vodOptions->status, "Finalizing Video...(3/3)");
 		break;
 	case PROGRESS:
 		uiProgressBarSetValue(vodOptions->pBar, (int)(100 * (data->i / vodOptions->duration)));
