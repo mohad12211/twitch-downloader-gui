@@ -224,7 +224,7 @@ static int setQualities(char *id, uiCombobox *cBox) {
 	uiComboboxClear(cBox);
 	root = cJSON_Parse((char *)qualityRes->memory);
 	qualities = cJSONUtils_GetPointer(root, "/0/data/clip/videoQualities");
-	if (cJSON_IsNull(qualities)) {
+	if ((!qualities) | cJSON_IsNull(qualities)) {
 		validID = 0;
 		goto err;
 	}
