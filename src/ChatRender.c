@@ -362,6 +362,10 @@ static void *renderTask(void *args) {
 
 	renderOptions->renderpid = pid;
 
+	uiData *data = malloc(sizeof(uiData));
+	*data = (uiData){.flag = PREPARE};
+	uiQueueMain(runOnUiThread, data);
+
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
 		if (strstr(buf, "STATUS")) {
@@ -382,7 +386,7 @@ static void *renderTask(void *args) {
 		uiQueueMain(runOnUiThread, logData);
 	}
 
-	uiData *data = malloc(sizeof(uiData));
+	data = malloc(sizeof(uiData));
 	*data = (uiData){.flag = FINISH, .i = mypclose(fp, pid)};
 	uiQueueMain(runOnUiThread, data);
 
@@ -424,9 +428,13 @@ static void resetArgs(uiButton *b, void *args) {
 static void runOnUiThread(void *args) {
 	uiData *data = (uiData *)args;
 	switch (data->flag) {
-	case STATUS:
+	case PREPARE:
 		uiControlDisable(uiControl(renderOptions->renderBtn));
 		uiControlDisable(uiControl(renderOptions->browseBtn));
+		uiLabelSetText(renderOptions->status, "Preparing...");
+		uiProgressBarSetValue(renderOptions->pBar, -1);
+		break;
+	case STATUS:
 		uiLabelSetText(renderOptions->status, data->buf);
 		uiProgressBarSetValue(renderOptions->pBar, data->i);
 		free(data->buf);
