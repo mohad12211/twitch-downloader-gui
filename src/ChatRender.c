@@ -250,7 +250,7 @@ static void browseBtnClicked(uiButton *b, void *args) {
 static void renderBtnClicked(uiButton *b, void *args) {
 	int selectedContainer = uiComboboxSelected(renderOptions->containersBox);
 	char *chatFile = uiEntryText(renderOptions->filePath);
-	char *name = strrchr(chatFile, '/') + 1;
+	char *name = strdup(strrchr(chatFile, '/') + 1);
 	// "abcdefg.json"
 	//          ^
 	//       strlen-4
@@ -262,6 +262,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
 	name[i + offset] = '\0';
 	char *videoFile = uiSaveFile(mainwin, NULL, name, containers[selectedContainer].filter);
 	if (videoFile == NULL) {
+		free(name);
 		uiFreeText(chatFile);
 		return;
 	}
@@ -333,6 +334,7 @@ static void renderBtnClicked(uiButton *b, void *args) {
 	renderOptions->cmd = cmd;
 
 	free(fr);
+	free(name);
 	free(width);
 	free(height);
 	free(updateTime);
