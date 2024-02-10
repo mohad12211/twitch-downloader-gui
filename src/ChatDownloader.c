@@ -301,6 +301,8 @@ static void *downloadTask(void *args) {
 			*logData = (uiData){.flag = PROGRESS, .i = percentage};
 		} else if (strstr(buf, "+")) {
 			*logData = (uiData){.flag = PROGRESS, .i = -1};
+		} else if (strstr(buf, "Writing") || strstr(buf, "Backfilling")) {
+			*logData = (uiData){.flag = FINALIZING, .i = -1};
 		} else {
 			*logData = (uiData){.flag = LOGGING, .buf = strdup(buf)};
 		}
@@ -453,6 +455,9 @@ static void runOnUiThread(void *args) {
 		uiControlDisable(uiControl(chatOptions->infoBtn));
 		uiLabelSetText(chatOptions->status, "Downloading...");
 		uiProgressBarSetValue(chatOptions->pBar, 0);
+		break;
+	case FINALIZING:
+		uiLabelSetText(chatOptions->status, "Finalizing...");
 		break;
 	case PROGRESS:
 		uiProgressBarSetValue(chatOptions->pBar, MIN(data->i, 100));
