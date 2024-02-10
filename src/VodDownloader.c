@@ -297,23 +297,22 @@ static void *downloadTask(void *args) {
 
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
-		if (strstr(buf, "Downloading")) {
+		if (strstr(buf, "Fetching")) {
+			*logData = (uiData){.flag = PREPARE};
+		} else if (strstr(buf, "Downloading")) {
 			int offset = strlen("[STATUS] - Downloading ");
 			int percentage = atoi(buf + offset);
 			*logData = (uiData){.i = percentage, .flag = DOWNLOADING};
+		} else if (strstr(buf, "Verifying")) {
+			int offset = strlen("[STATUS] - Verifying Parts ");
+			int percentage = atoi(buf + offset);
+			*logData = (uiData){.i = percentage, .flag = VERIFYING};
 		} else if (strstr(buf, "Combining")) {
-			*logData = (uiData){.flag = COMBINING};
+			int offset = strlen("[STATUS] - Combining Parts ");
+			int percentage = atoi(buf + offset);
+			*logData = (uiData){.i = percentage, .flag = COMBINING};
 		} else if (strstr(buf, "Finalizing")) {
 			*logData = (uiData){.flag = FINALIZING};
-		} else if (strstr(buf, "time=")) {
-			if (strstr(buf, "speed=N/A")) {
-				free(logData);
-				continue;
-			}
-			struct tm progress;
-			strptime(strstr(buf, "time=") + 5, "%H:%M:%S", &progress);
-			float progressSeconds = progress.tm_hour * 3600 + progress.tm_min * 60 + progress.tm_sec;
-			*logData = (uiData){.i = progressSeconds, .flag = PROGRESS};
 		} else {
 			*logData = (uiData){.flag = LOGGING, .buf = strdup(buf)};
 		}
@@ -417,22 +416,24 @@ static void runOnUiThread(void *args) {
 	case PREPARE:
 		uiControlDisable(uiControl(vodOptions->downloadBtn));
 		uiControlDisable(uiControl(vodOptions->infoBtn));
-		uiLabelSetText(vodOptions->status, "Preparing...");
+		uiLabelSetText(vodOptions->status, "Fetching Video Info [1/5]");
 		uiProgressBarSetValue(vodOptions->pBar, -1);
 		break;
 	case DOWNLOADING:
 		uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
-		uiLabelSetText(vodOptions->status, "Downloading...(1/3)");
+		uiLabelSetText(vodOptions->status, "Downloading...[2/5]");
+		break;
+	case VERIFYING:
+		uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
+		uiLabelSetText(vodOptions->status, "Verifying Parts...[3/5]");
 		break;
 	case COMBINING:
-		uiProgressBarSetValue(vodOptions->pBar, -1);
-		uiLabelSetText(vodOptions->status, "Combining Parts...(2/3)");
+		uiProgressBarSetValue(vodOptions->pBar, MIN(data->i, 100));
+		uiLabelSetText(vodOptions->status, "Combining Parts...[4/5]");
 		break;
 	case FINALIZING:
-		uiLabelSetText(vodOptions->status, "Finalizing Video...(3/3)");
-		break;
-	case PROGRESS:
-		uiProgressBarSetValue(vodOptions->pBar, (int)(100 * (data->i / vodOptions->duration)));
+		uiProgressBarSetValue(vodOptions->pBar, -1);
+		uiLabelSetText(vodOptions->status, "Finalizing Video...[5/5]");
 		break;
 	case LOGGING:
 		uiMultilineEntryAppend(vodOptions->logsEntry, data->buf);
