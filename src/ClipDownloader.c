@@ -195,12 +195,22 @@ static void *downloadTask(void *args) {
 	clipOptions->downloadpid = pid;
 
 	uiData *data = malloc(sizeof(uiData));
-	*data = (uiData){.flag = DOWNLOADING};
+	*data = (uiData){.flag = PREPARE};
 	uiQueueMain(runOnUiThread, data);
 
 	while (mygets(buf, 200, fp) != NULL) {
 		uiData *logData = malloc(sizeof(uiData));
-		*logData = (uiData){.buf = strdup(buf), .flag = LOGGING};
+		if (strstr(buf, "%")) {
+			int offset = strlen("[STATUS] - Downloading Clip ");
+			int percentage = atoi(buf + offset);
+			*logData = (uiData){.flag = DOWNLOADING, .i = percentage};
+		} else if (strstr(buf, "Encoding")) {
+			*logData = (uiData){.flag = FINALIZING};
+		} else if (strstr(buf, "Fetching")) {
+			*logData = (uiData){.flag = PREPARE};
+		} else {
+			*logData = (uiData){.flag = LOGGING, .buf = strdup(buf)};
+		}
 		uiQueueMain(runOnUiThread, logData);
 	}
 
@@ -322,7 +332,13 @@ static void runOnUiThread(void *args) {
 		uiControlDisable(uiControl(clipOptions->downloadBtn));
 		uiControlDisable(uiControl(clipOptions->infoBtn));
 		uiLabelSetText(clipOptions->status, "Downloading...");
-		uiProgressBarSetValue(clipOptions->pBar, -1);
+		uiProgressBarSetValue(clipOptions->pBar, data->i);
+		break;
+	case FINALIZING:
+		uiLabelSetText(clipOptions->status, "Encoding Clip Metadata...");
+		break;
+	case PREPARE:
+		uiLabelSetText(clipOptions->status, "Fetching Clip Info...");
 		break;
 	case LOGGING:
 		uiMultilineEntryAppend(clipOptions->logsEntry, data->buf);
