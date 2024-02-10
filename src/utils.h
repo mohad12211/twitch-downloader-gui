@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 #include <wait.h>
 
 #include "../libs/cJSON.h"
