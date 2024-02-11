@@ -1,6 +1,6 @@
 # Maintainer: Typology <mohammedkaabi64@gmail.com>
 pkgname=twitch-downloader-gui
-pkgver=3.0.0
+pkgver=3.1.0
 pkgrel=1
 pkgdesc="Twitch VOD/Clip Downloader - Chat Download/Render/Replay - GUI Version"
 arch=('x86_64')
