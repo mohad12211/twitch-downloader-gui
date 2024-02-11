@@ -1,5 +1,5 @@
 Name:           twitch-downloader-gui
-Version:        3.1.0
+Version:        3.1.1
 Release:        1%{?dist}
 Summary:        GUI Linux App to download clips/vods/chats and render chat for Twitch
 
@@ -7,7 +7,7 @@ License:        GPLv3
 URL:            https://github.com/mohad12211/TwitchDownloader-gui
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 
-Requires:       libcurl (ffmpeg or ffmpeg-free)
+Requires:       (libcurl or libcurl4) (ffmpeg or ffmpeg-free)
 
 BuildArch:      x86_64
 
