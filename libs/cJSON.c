@@ -20,6 +20,10 @@
   THE SOFTWARE.
 */
 
+#ifndef ENABLE_LOCALES
+#define ENABLE_LOCALES 1
+#endif
+
 /* cJSON */
 /* JSON parser in C. */
 
