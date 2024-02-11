@@ -1,5 +1,7 @@
 #include "app.h"
 
+// TODO: add about section with some info (like version)
+
 uiWindow *mainwin;
 char *configFile;
 cJSON *configJson;
