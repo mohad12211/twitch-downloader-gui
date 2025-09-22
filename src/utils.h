@@ -41,7 +41,17 @@ typedef struct {
 	unsigned char *memory;
 	size_t used;
 	size_t size;
-} string; // TODO: maybe change this name?
+} string;
+
+typedef struct {
+	string *qualities;
+	size_t count;
+	size_t capacity;
+} QualityList;
+
+void QualityList_init(QualityList *list, size_t initial_capacity);
+void QualityList_add(QualityList *list, const char *quality_start, size_t quality_len);
+void QualityList_destroy(QualityList *list);
 
 typedef struct {
 	int i;
@@ -61,6 +71,8 @@ string *performRequest(char *req);
 string *getClipQualities(const char *id);
 string *getClipInfo(const char *id);
 string *getVodInfo(const char *id);
+string *getVodAcessToken(const char *id);
+QualityList getVodQualities(const char *id, const char *token, const char *sig);
 char *mygets(char *buf, int n, FILE *f);
 char *getLocalTime(char *utcTime);
 void concat(string *str, int count, ...);

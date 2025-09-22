@@ -1,7 +1,7 @@
 #include "utils.h"
 
 // TODO: add error handling
-string *performRequest(char *req) {
+string *performGQLRequest(char *req) {
 	string *chunk = malloc(sizeof(string));
 	chunk->memory = malloc(1);
 	chunk->used = 0;
@@ -24,6 +24,24 @@ string *performRequest(char *req) {
 	return chunk;
 }
 
+string *performUsherRequest(char *url) {
+	string *chunk = malloc(sizeof(string));
+	chunk->memory = malloc(1);
+	chunk->used = 0;
+	chunk->size = 0;
+	CURL *hnd = curl_easy_init();
+
+	curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "GET");
+	curl_easy_setopt(hnd, CURLOPT_URL, url);
+	curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(hnd, CURLOPT_WRITEDATA, (void *)chunk);
+
+	curl_easy_perform(hnd);
+	curl_easy_cleanup(hnd);
+
+	return chunk;
+}
+
 string *requestImage(char *link) {
 	string *chunk = malloc(sizeof(string));
 	chunk->memory = malloc(1);
@@ -40,12 +58,85 @@ string *requestImage(char *link) {
 	return chunk;
 }
 
+string *getVodAcessToken(const char *id) {
+	char *base = "{\"operationName\":\"PlaybackAccessToken_Template\",\"query\":\"query PlaybackAccessToken_Template($login: String!, $isLive: Boolean!, $vodID: "
+							 "ID!, $isVod: Boolean!, $playerType: String!) {  streamPlaybackAccessToken(channelName: $login, params: {platform: \\\"web\\\", playerBackend: "
+							 "\\\"mediaplayer\\\", playerType: $playerType}) @include(if: $isLive) {    value    signature    __typename  }  videoPlaybackAccessToken(id: "
+							 "$vodID, params: {platform: \\\"web\\\", playerBackend: \\\"mediaplayer\\\", playerType: $playerType}) @include(if: $isVod) {    value    "
+							 "signature    __typename  }}\",\"variables\":{\"isLive\":false,\"login\":\"\",\"isVod\":true,\"vodID\":\"%s\",\"playerType\":\"embed\"}}";
+	char req[strlen(base) + strlen(id) - 1]; // '%s' counts as 2 more chars, we only need 1 more for null char
+	sprintf(req, base, id);
+	return performGQLRequest(req);
+}
+
+QualityList getVodQualities(const char *id, const char *token, const char *sig) {
+	CURL *hnd = curl_easy_init();
+	char *escaped_sig = curl_easy_escape(hnd, sig, 0);
+	char *escaped_token = curl_easy_escape(hnd, token, 0);
+	char *base = "https://usher.ttvnw.net/vod/"
+							 "%s.m3u8?sig=%s&token=%s&allow_source=true&allow_audio_only=true&include_unavailable=true&platform=web&player_backend=mediaplayer&playlist_"
+							 "include_framerate=true&supported_codecs=av1,h265,h264";
+	size_t url_len = strlen(base) + strlen(id) + strlen(escaped_sig) + strlen(escaped_token) - 5; // 3 '%s' count as 6 chars, we only need 1 more for null char
+	char url[url_len];
+	sprintf(url, base, id, escaped_sig, escaped_token);
+
+	string *chunk = malloc(sizeof(string));
+	chunk->memory = malloc(1);
+	chunk->used = 0;
+	chunk->size = 0;
+	printf("Usher URL: %s\n", url);
+	curl_easy_setopt(hnd, CURLOPT_URL, url);
+	curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(hnd, CURLOPT_WRITEDATA, (void *)chunk);
+
+	curl_easy_perform(hnd);
+	curl_free(escaped_sig);
+	curl_free(escaped_token);
+	curl_easy_cleanup(hnd);
+
+	// parse m3u8
+	const char *MEDIA_TAG = "#EXT-X-MEDIA";
+	const size_t MEDIA_TAG_LEN = strlen(MEDIA_TAG);
+	const char *NAME_ATTR_TAG = "NAME=\"";
+	const size_t NAME_ATTR_TAG_LEN = strlen(NAME_ATTR_TAG);
+
+	QualityList list;
+	QualityList_init(&list, 10);
+
+	const char *p = (char *)chunk->memory;
+	const char *line_end;
+
+	while ((line_end = strchr(p, '\n')) != NULL) {
+		size_t line_len = line_end - p;
+
+		if (line_len >= MEDIA_TAG_LEN && strncmp(p, MEDIA_TAG, MEDIA_TAG_LEN) == 0) {
+			const char *name_attr = strstr(p, NAME_ATTR_TAG);
+			// Ensure name_attr is found and is within the current line
+			if (name_attr != NULL && name_attr < p + line_len) {
+				const char *quality_start = name_attr + NAME_ATTR_TAG_LEN;
+				const char *quality_end = strchr(quality_start, '"');
+
+				// Ensure quality_end is found and is within the current line
+				if (quality_end != NULL && quality_end < p + line_len) {
+					size_t quality_len = quality_end - quality_start;
+					QualityList_add(&list, quality_start, quality_len);
+				}
+			}
+		}
+		p = line_end + 1;
+	}
+
+	free(chunk->memory);
+	free(chunk);
+	return list;
+}
+
 string *getClipQualities(const char *id) {
 	char *base = "[{\"operationName\":\"VideoAccessToken_Clip\",\"variables\":{\"slug\":\"%s\"},\"extensions\":{\"persistedQuery\":{"
 							 "\"version\":1,\"sha256Hash\":\"36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11\"}}}]";
 	char req[strlen(base) + strlen(id) - 1]; // '%s' counts as 2 more chars, we only need 1 more for null char
 	sprintf(req, base, id);
-	return performRequest(req);
+	return performGQLRequest(req);
 }
 
 string *getClipInfo(const char *id) {
@@ -54,7 +145,7 @@ string *getClipInfo(const char *id) {
 							 "}\",\"variables\":{}}";
 	char req[strlen(base) + strlen(id) - 1];
 	sprintf(req, base, id);
-	return performRequest(req);
+	return performGQLRequest(req);
 }
 
 string *getVodInfo(const char *id) {
@@ -62,7 +153,7 @@ string *getVodInfo(const char *id) {
 			"{\"query\":\"query{video(id:\\\"%s\\\"){title,lengthSeconds,createdAt,owner{displayName},thumbnailURLs(height:180,width:320)}}\",\"variables\":{}}";
 	char req[strlen(base) + strlen(id) - 1];
 	sprintf(req, base, id);
-	return performRequest(req);
+	return performGQLRequest(req);
 }
 
 size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
@@ -182,4 +273,48 @@ int mypclose(FILE *f, pid_t pid) {
 	returned_pid = waitpid(pid, &pstat, 0);
 	fclose(f);
 	return returned_pid == -1 ? -1 : pstat;
+}
+
+void QualityList_init(QualityList *list, size_t initial_capacity) {
+	list->qualities = malloc(initial_capacity * sizeof(string));
+	list->count = 0;
+	list->capacity = initial_capacity;
+}
+
+void QualityList_add(QualityList *list, const char *quality_start, size_t quality_len) {
+	if (list->count >= list->capacity) {
+		size_t new_capacity = list->capacity * 2;
+		string *new_qualities = realloc(list->qualities, new_capacity * sizeof(string));
+		list->qualities = new_qualities;
+		list->capacity = new_capacity;
+	}
+
+	string *current_quality_string = &list->qualities[list->count];
+
+	current_quality_string->memory = malloc(quality_len + 1);
+
+	memcpy(current_quality_string->memory, quality_start, quality_len);
+
+	current_quality_string->memory[quality_len] = '\0';
+
+	current_quality_string->used = quality_len;
+	current_quality_string->size = quality_len + 1; // null terminator
+
+	list->count++;
+}
+
+void QualityList_destroy(QualityList *list) {
+	for (size_t i = 0; i < list->count; i++) {
+		if (list->qualities[i].memory != NULL) {
+			free(list->qualities[i].memory);
+		}
+	}
+
+	if (list->qualities != NULL) {
+		free(list->qualities);
+	}
+
+	list->qualities = NULL;
+	list->count = 0;
+	list->capacity = 0;
 }

@@ -7,6 +7,7 @@ static void infoBtnClicked(uiButton *b, void *data);
 static void cropToggle(uiCheckbox *c, void *data);
 static char *getId(char *link);
 static int setInfo(char *id);
+static void setQualitites(char *id, uiCombobox *cBox);
 static void setThumbnail(char *link);
 static void *downloadTask(void *args);
 static void runOnUiThread(void *args);
@@ -184,7 +185,7 @@ uiControl *VodDownloaderDrawUi(void) {
 	*vodOptions = (VodOptions){
 			linkEntry, nameLabel, titleLabel,			durationLabel, createdLabel,	 logsEntry,						pBar,				 status,		 downloadBtn, infoBtn,	NULL,
 			NULL,			 0,					cropStartCheck, cropEndCheck,	 startSpinsBox,	 cropStartBox,				endSpinsBox, cropEndBox, startHour,		startMin, startSec,
-			endHour,	 endMin,		endSec,					OAuth,				 dwnThreadsSpin, threadBandwidthSpin, imageArea,	 handler,		 0,
+			endHour,	 endMin,		endSec,					OAuth,				 dwnThreadsSpin, threadBandwidthSpin, qualities,	 imageArea,	 handler,			0,
 	};
 
 	uiButtonOnClicked(infoBtn, infoBtnClicked, NULL);
@@ -207,6 +208,7 @@ static void infoBtnClicked(uiButton *b, void *data) {
 		free(id);
 		goto err;
 	}
+	setQualitites(id, vodOptions->qualities);
 	uiControlEnable(uiControl(vodOptions->cropStartBox));
 	uiControlEnable(uiControl(vodOptions->cropEndBox));
 	uiControlEnable(uiControl(vodOptions->downloadBtn));
@@ -352,6 +354,31 @@ static char *getId(char *link) {
 	return id;
 }
 
+static void setQualitites(char *id, uiCombobox *cBox) {
+	string *accessTokenRes = getVodAcessToken(id);
+	cJSON *root = cJSON_Parse((char *)accessTokenRes->memory);
+	const char *value = cJSONUtils_GetPointer(root, "/data/videoPlaybackAccessToken/value")->valuestring;
+	const char *signature = cJSONUtils_GetPointer(root, "/data/videoPlaybackAccessToken/signature")->valuestring;
+	QualityList qualities = {0};
+	if (value && signature) {
+		qualities = getVodQualities(id, value, signature);
+		if (qualities.count > 0) {
+			for (size_t i = 0; i < qualities.count; i++) {
+				uiComboboxAppend(cBox, (char *)qualities.qualities[i].memory);
+			}
+			uiComboboxSetSelected(cBox, 0);
+			QualityList_destroy(&qualities);
+		} else {
+			uiMsgBoxError(mainwin, "Error", "No Qualities Found");
+		}
+	}
+error:
+	free(accessTokenRes->memory);
+	free(accessTokenRes);
+	QualityList_destroy(&qualities);
+	cJSON_Delete(root);
+}
+
 static int setInfo(char *id) {
 	int validID = 1;
 	string *infoRes = getVodInfo(id);
@@ -477,6 +504,7 @@ void VodDownloaderResetUi(void) {
 	uiLabelSetText(vodOptions->durationLabel, "");
 	uiLabelSetText(vodOptions->createdLabel, "");
 	uiLabelSetText(vodOptions->status, "Idle...");
+	uiComboboxClear(vodOptions->qualities);
 	uiProgressBarSetValue(vodOptions->pBar, 0);
 	uiCheckboxSetChecked(vodOptions->cropStartCheck, 0);
 	uiCheckboxSetChecked(vodOptions->cropEndCheck, 0);
