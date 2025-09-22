@@ -372,7 +372,6 @@ static void setQualitites(char *id, uiCombobox *cBox) {
 			uiMsgBoxError(mainwin, "Error", "No Qualities Found");
 		}
 	}
-error:
 	free(accessTokenRes->memory);
 	free(accessTokenRes);
 	QualityList_destroy(&qualities);

@@ -68,7 +68,8 @@ size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *user
 FILE *mypopen(const char *cmd, pid_t *pid);
 int mypclose(FILE *f, pid_t pid);
 string *requestImage(char *link);
-string *performRequest(char *req);
+string *performGQLRequest(char *req);
+string *performUsherRequest(char *req);
 string *getClipQualities(const char *id);
 string *getClipInfo(const char *id);
 string *getVodInfo(const char *id);

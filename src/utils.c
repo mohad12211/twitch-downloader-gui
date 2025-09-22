@@ -122,6 +122,37 @@ QualityList getVodQualities(const char *id, const char *token, const char *sig) 
 					QualityList_add(&list, quality_start, quality_len);
 				}
 			}
+		} else if (strstr(p, "com.amazon.ivs.unavailable-media") != NULL) {
+			// get the string inside the VALUE attribute
+
+			const char *value_attr = strstr(p, "VALUE=\"");
+			if (value_attr != NULL && value_attr < p + line_len) {
+				const char *value_start = value_attr + strlen("VALUE=\"");
+				const char *value_end = strchr(value_start, '"');
+				if (value_end != NULL && value_end < p + line_len) {
+					size_t value_len = value_end - value_start;
+					size_t base64Len = B64_DECODE_LENGTH(value_len) + 1;
+					char decodedValue[base64Len];
+					if (b64_decode(value_start, value_len, decodedValue, base64Len) != 0) {
+						decodedValue[base64Len - 1] = '\0';
+						cJSON *unavailableJson = cJSON_Parse(decodedValue);
+						if (unavailableJson != NULL && cJSON_IsArray(unavailableJson)) {
+							cJSON *item = NULL;
+							cJSON_ArrayForEach(item, unavailableJson) {
+								// [{"NAME":"1440p","BANDWIDTH":9134415,"CODECS":"hev1.1.2.L150.90.0.0.0.0.0,mp4a.40.2","RESOLUTION":"2560x1440","FILTER_REASONS":[],"AUTHORIZATION_REASONS":["AUTHZ_NOT_LOGGED_IN"],"GROUP-ID":"chunked","FRAME-RATE":30}]
+								// add the name and append to it the fps
+								cJSON *name = getJson(item, "NAME");
+								cJSON *fps = getJson(item, "FRAME-RATE");
+								if (name != NULL && cJSON_IsString(name) && fps != NULL && cJSON_IsNumber(fps)) {
+									char qualityWithFps[100];
+									sprintf(qualityWithFps, "%s%d", name->valuestring, fps->valueint);
+									QualityList_add(&list, qualityWithFps, strlen(qualityWithFps));
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		p = line_end + 1;
 	}
