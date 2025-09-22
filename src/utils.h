@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <wait.h>
 
+#include "../libs/base64.h"
 #include "../libs/cJSON.h"
 #include "../libs/cJSON_Utils.h"
 #include "../libs/stb_image.h"

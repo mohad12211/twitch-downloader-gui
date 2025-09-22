@@ -95,9 +95,9 @@ QualityList getVodQualities(const char *id, const char *token, const char *sig) 
 	curl_easy_cleanup(hnd);
 
 	// parse m3u8
-	const char *MEDIA_TAG = "#EXT-X-MEDIA";
+	const char *MEDIA_TAG = "#EXT-X-STREAM-INF";
 	const size_t MEDIA_TAG_LEN = strlen(MEDIA_TAG);
-	const char *NAME_ATTR_TAG = "NAME=\"";
+	const char *NAME_ATTR_TAG = "VIDEO=\"";
 	const size_t NAME_ATTR_TAG_LEN = strlen(NAME_ATTR_TAG);
 
 	QualityList list;
