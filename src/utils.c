@@ -137,15 +137,15 @@ QualityList getVodQualities(const char *id, const char *token, const char *sig) 
 						decodedValue[base64Len - 1] = '\0';
 						cJSON *unavailableJson = cJSON_Parse(decodedValue);
 						if (unavailableJson != NULL && cJSON_IsArray(unavailableJson)) {
+							printf("Unavailable qualities found:%s\n", cJSON_Print(unavailableJson));
 							cJSON *item = NULL;
 							cJSON_ArrayForEach(item, unavailableJson) {
 								// [{"NAME":"1440p","BANDWIDTH":9134415,"CODECS":"hev1.1.2.L150.90.0.0.0.0.0,mp4a.40.2","RESOLUTION":"2560x1440","FILTER_REASONS":[],"AUTHORIZATION_REASONS":["AUTHZ_NOT_LOGGED_IN"],"GROUP-ID":"chunked","FRAME-RATE":30}]
 								// add the name and append to it the fps
 								cJSON *name = getJson(item, "NAME");
-								cJSON *fps = getJson(item, "FRAME-RATE");
-								if (name != NULL && cJSON_IsString(name) && fps != NULL && cJSON_IsNumber(fps)) {
+								if (name != NULL && cJSON_IsString(name)) {
 									char qualityWithFps[100];
-									sprintf(qualityWithFps, "%s%d", name->valuestring, fps->valueint);
+									sprintf(qualityWithFps, "%s", name->valuestring);
 									QualityList_add(&list, qualityWithFps, strlen(qualityWithFps));
 								}
 							}
@@ -321,6 +321,11 @@ void QualityList_add(QualityList *list, const char *quality_start, size_t qualit
 	}
 
 	string *current_quality_string = &list->qualities[list->count];
+
+	if (strstr(quality_start, "chunked") != NULL) {
+		// skip chunked qualities
+		return;
+	}
 
 	current_quality_string->memory = malloc(quality_len + 1);
 
